@@ -25,7 +25,9 @@ expected. `public_event_content` is the intended public read path (published,
 non-personal content only). The admin RPCs (`grant_membership`,
 `revoke_membership`, `create_organization`, `create_event`, `update_event`,
 `transition_registration`, `add_review_note`) are callable by signed-in users by
-design and check the event pin and permission inside.
+design and check the event pin and permission inside. The INFO note
+`rls_enabled_no_policy` on `message_suppressions` is also intended: it is a
+server-only table that no signed-in user may read or write.
 
 ## Still to do
 
