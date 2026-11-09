@@ -32,6 +32,32 @@ const config = [
     },
   },
   {
+    // Admin code runs as the signed-in user with RLS; it never gets the
+    // service-role client (design §12.4).
+    files: [
+      'src/app/admin/**/*.{js,jsx,ts,tsx}',
+      'src/app/api/admin/**/*.{js,jsx,ts,tsx}',
+      'src/app/auth/**/*.{js,jsx,ts,tsx}',
+      'src/components/**/*.{js,jsx,ts,tsx}',
+      'core/auth/**/*.{js,jsx,ts,tsx}',
+      'core/http/**/*.{js,jsx,ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: SERVICE_ROLE_MODULES,
+              message:
+                'Admin code must use the event-pinned client, not the service-role client.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['sites/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'no-restricted-imports': [

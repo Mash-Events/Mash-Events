@@ -1,0 +1,44 @@
+import 'server-only';
+import { createAuthClient } from '../auth/server';
+
+export type WorkspaceEvent = {
+  id: string;
+  orgId: string;
+  slug: string;
+  name: string;
+  status: string;
+  timezone: string;
+};
+
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID.test(value);
+}
+
+/**
+ * Loads an event the signed-in admin may see. RLS on `events` returns nothing
+ * for events outside the user's memberships, so a foreign id is just "not
+ * found" (§12.4).
+ */
+export async function loadVisibleEvent(
+  eventId: string
+): Promise<WorkspaceEvent | null> {
+  if (!isUuid(eventId)) return null;
+  const supabase = await createAuthClient();
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, org_id, slug, name, status, timezone')
+    .eq('id', eventId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    id: data.id,
+    orgId: data.org_id,
+    slug: data.slug,
+    name: data.name,
+    status: data.status,
+    timezone: data.timezone,
+  };
+}
