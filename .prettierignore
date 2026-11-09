@@ -1,0 +1,9 @@
+.git
+.next
+next-env.d.ts
+.vercel
+node_modules
+coverage
+public
+*.pdf
+.mcp.json

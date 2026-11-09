@@ -1,0 +1,844 @@
+/* Mash Operations Console — Admin Design System v3
+   Scoped to .admin-v2 so it doesn't bleed into the public site.
+   Soft grey canvas, white cards, near-black ink, lime/orange/yellow accents.
+   Admin font variables are injected by the root layout via next/font/google. */
+
+/* ── Tokens (light, single theme) ───────────────────────────────────────── */
+.admin-v2,
+.admin-v2-drawer-content {
+  --adm-canvas: #f3f3f2;
+  --adm-canvas-2: #f7f7f6;
+  --adm-panel: #ffffff;
+  --adm-panel-2: #f3f3f2;
+  --adm-line: rgba(17, 17, 17, 0.07);
+  --adm-line-strong: rgba(17, 17, 17, 0.13);
+  --adm-ink: #141414;
+  --adm-ink-2: #3b3b3b;
+  --adm-ink-3: #8c8c8c;
+  --adm-ink-4: #b4b4b4;
+
+  /* Primary actions are near-black, like the reference's "Upgrade now". */
+  --adm-accent: #141414;
+  --adm-accent-ink: #ffffff;
+  --adm-accent-soft: rgba(140, 198, 63, 0.18);
+  --adm-accent-line: rgba(125, 186, 52, 0.5);
+
+  /* Brand greens */
+  --adm-lime: #8cc63f;
+  --adm-lime-2: #b8e06a;
+  --adm-yellow: #f2e94e;
+  --adm-orange: #f5a45b;
+
+  --adm-purple: #4f8a17;
+  --adm-purple-soft: rgba(140, 198, 63, 0.18);
+
+  --adm-ok: #4f8a17;
+  --adm-ok-soft: rgba(140, 198, 63, 0.18);
+  --adm-warn: #c9701f;
+  --adm-warn-soft: rgba(245, 164, 91, 0.18);
+  --adm-bad: #d8452f;
+  --adm-bad-soft: rgba(216, 69, 47, 0.1);
+  --adm-info: #8a7a0c;
+  --adm-info-soft: rgba(242, 233, 78, 0.28);
+
+  --adm-sans: var(
+    --font-admin-sans,
+    'Plus Jakarta Sans',
+    system-ui,
+    sans-serif
+  );
+  /* No monospace in this system: numbers use tabular sans figures instead. */
+  --adm-mono: var(--adm-sans);
+  --adm-serif: var(--adm-sans);
+}
+
+.admin-v2 .adm-sidebar {
+  --adm-canvas-2: #ffffff;
+  --adm-panel: #f3f3f2;
+  --adm-panel-2: #f0f0ef;
+  background: #ffffff !important;
+}
+
+.admin-v2 {
+  font-family: var(--adm-sans);
+  -webkit-font-smoothing: antialiased;
+  background: var(--adm-canvas);
+  color: var(--adm-ink);
+}
+
+/* ── Typography helpers ─────────────────────────────────────────────────── */
+.admin-v2 .adm-mono {
+  font-family: var(--adm-mono);
+  font-feature-settings: 'tnum';
+}
+.admin-v2 .adm-serif {
+  font-family: var(--adm-serif);
+  font-style: normal;
+}
+.admin-v2 .adm-eyebrow,
+.admin-v2-drawer-content .adm-eyebrow {
+  font-family: var(--adm-sans);
+  font-size: 11.5px;
+  letter-spacing: 0;
+  color: var(--adm-ink-3);
+  font-weight: 500;
+}
+
+/* ── Animations ─────────────────────────────────────────────────────────── */
+@keyframes adm-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes adm-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Static status dot (was an animated pulse; kept calm on purpose) */
+.admin-v2 .adm-pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--adm-accent);
+}
+
+.admin-v2 .adm-live-ticker {
+  animation: adm-marquee 80s linear infinite;
+}
+
+.admin-v2 .adm-page-content {
+  opacity: 1;
+}
+
+/* Route-change placeholder (src/app/admin/loading.jsx) */
+.admin-v2 .adm-route-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-v2 .adm-route-loading-bar {
+  border-radius: 10px;
+  background: var(--adm-panel-2);
+  animation: adm-route-pulse 1.2s ease-in-out infinite;
+}
+@keyframes adm-route-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-v2 .adm-route-loading-bar {
+    animation: none;
+  }
+}
+
+/* ── Nav button hover ───────────────────────────────────────────────────── */
+.admin-v2 .adm-nav-btn {
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.admin-v2 .adm-nav-btn:hover {
+  background: var(--adm-panel) !important;
+  color: var(--adm-ink) !important;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────── */
+.admin-v2 *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.admin-v2 *::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-v2 *::-webkit-scrollbar-thumb {
+  background: var(--adm-line-strong);
+  border-radius: 10px;
+}
+
+/* ── Focus ring ─────────────────────────────────────────────────────────── */
+.admin-v2 :focus-visible {
+  outline: 2px solid var(--adm-accent);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* ── Dashboard big numbers ──────────────────────────────────────────────── */
+.admin-v2 .adm-big-number-value {
+  font-family: var(--adm-mono);
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--adm-ink);
+  font-feature-settings: 'tnum';
+}
+.admin-v2 .adm-big-number-value--accent {
+  color: var(--adm-ok);
+}
+
+/* ── Row hover ──────────────────────────────────────────────────────────── */
+.admin-v2 .adm-row {
+  transition: background 0.1s;
+}
+.admin-v2 .adm-row:hover {
+  background: var(--adm-panel-2) !important;
+}
+
+/* ── Slide-over drawer (vaul portal renders outside .admin-v2) ──────────── */
+.admin-v2-drawer-overlay {
+  background: rgba(20, 20, 20, 0.35) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+.admin-v2-drawer-content {
+  background: #ffffff !important;
+  border-left: 1px solid rgba(17, 17, 17, 0.13) !important;
+  color: #141414 !important;
+  font-family: var(
+    --font-admin-sans,
+    'Plus Jakarta Sans',
+    system-ui,
+    sans-serif
+  ) !important;
+}
+.admin-v2-drawer-content input:focus-visible,
+.admin-v2-drawer-content select:focus-visible,
+.admin-v2-drawer-content textarea:focus-visible {
+  border-color: var(--adm-accent) !important;
+  box-shadow: 0 0 0 3px var(--adm-accent-soft) !important;
+}
+.admin-v2-drawer-content .adm-guest-detail-section,
+.admin-v2-drawer-content .adm-guest-history-section {
+  border: 1px solid var(--adm-line);
+  border-radius: 10px;
+  background: var(--adm-panel);
+  padding: 16px;
+}
+.admin-v2 .adm-guest-create-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.admin-v2 .adm-guest-create-form input:focus-visible {
+  border-color: var(--adm-accent) !important;
+  box-shadow: 0 0 0 3px var(--adm-accent-soft) !important;
+}
+@media (max-width: 700px) {
+  .admin-v2 .adm-guest-create-fields {
+    grid-template-columns: 1fr;
+  }
+}
+.admin-v2-drawer-content .adm-guest-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.admin-v2-drawer-content .adm-guest-detail-field-wide {
+  grid-column: 1 / -1;
+}
+@media (max-width: 420px) {
+  .admin-v2-drawer-content .adm-guest-detail-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Mobile nav tabs ────────────────────────────────────────────────────── */
+.admin-v2 .adm-mobile-nav {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .admin-v2 .adm-sidebar {
+    display: none !important;
+  }
+  .admin-v2 .adm-mobile-nav {
+    display: flex;
+  }
+}
+
+/* ── Mobile responsive overrides ────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  /* Ticker: hide stats, keep LIVE + time */
+  .admin-v2 .adm-ticker-right {
+    display: none !important;
+  }
+  .admin-v2 .adm-ticker-strip {
+    padding: 5px 14px !important;
+  }
+
+  /* Title row: tighten padding, hide search bar and operator card */
+  .admin-v2 .adm-topbar-title-row {
+    padding: 10px 14px !important;
+    gap: 10px !important;
+  }
+  .admin-v2 .adm-topbar-search {
+    display: none !important;
+  }
+  .admin-v2 .adm-topbar-operator {
+    display: none !important;
+  }
+  .admin-v2 .adm-topbar-meta {
+    display: none !important;
+  }
+
+  /* Show icon-only search button instead */
+  .admin-v2 .adm-topbar-search-icon {
+    display: flex !important;
+  }
+
+  /* Smaller page title on tablet/mobile */
+  .admin-v2 .adm-topbar-h1 {
+    font-size: 22px !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  /* Main content: reduce horizontal padding */
+  .admin-v2 .adm-page-content {
+    padding: 16px 16px 40px !important;
+  }
+
+  /* Dashboard big numbers: smaller on mobile */
+  .admin-v2 .adm-big-number-value {
+    font-size: 38px !important;
+  }
+
+  /* Table: enable horizontal scroll */
+  .admin-v2 table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── Dashboard grid responsive ───────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  /* Big number tiles: stack vertically, swap border-right for border-bottom */
+  .admin-v2 .adm-dash-big-numbers {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-v2 .adm-dash-big-numbers > div {
+    border-right: none !important;
+    border-bottom: 1px solid var(--adm-line) !important;
+  }
+  .admin-v2 .adm-dash-big-numbers > div:last-child {
+    border-bottom: none !important;
+  }
+
+  /* ActionFeed + Funnel: stack vertically */
+  .admin-v2 .adm-dash-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Status grid: 2 columns on tablet */
+  .admin-v2 .adm-dash-status-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-v2 .adm-topbar-h1 {
+    font-size: 20px !important;
+  }
+  .admin-v2 .adm-ticker-strip {
+    padding: 4px 12px !important;
+  }
+  .admin-v2 .adm-topbar-title-row {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+  .admin-v2 .adm-page-content {
+    padding: 12px 12px 32px !important;
+  }
+  .admin-v2 .adm-topbar-kicker {
+    display: none !important;
+  }
+  .admin-v2 .adm-big-number-value {
+    font-size: 32px !important;
+  }
+  .admin-v2 .adm-dash-status-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .admin-v2 .adm-dash-status-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Settings page responsive ────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  /* Rate Limits + Integrations + Event Config: stack to single column */
+  .admin-v2 .adm-settings-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Admin + Reviewer email columns: stack vertically */
+  .admin-v2 .adm-settings-email-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Add-email form: wrap buttons below the input */
+  .admin-v2 .adm-settings-add-form {
+    flex-wrap: wrap !important;
+  }
+  .admin-v2 .adm-settings-add-form input {
+    width: 100% !important;
+    flex: none !important;
+  }
+}
+
+/* ── Skeleton pulse ─────────────────────────────────────────────────────── */
+@keyframes adm-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANEL COMPONENT OVERRIDES
+   All Tailwind-styled elements inside .admin-v2 get overridden here so the
+   light design tokens apply without touching the panel JSX files.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Generic text colours ───────────────────────────────────────────────── */
+.admin-v2 {
+  color: var(--adm-ink);
+}
+.admin-v2 p,
+.admin-v2 span,
+.admin-v2 div {
+  color: inherit;
+}
+
+/* ── Cards / panels / sections ──────────────────────────────────────────── */
+.admin-v2 [class*='bg-white'],
+.admin-v2 [class*='bg-zinc-50'],
+.admin-v2 [class*='bg-zinc-100'] {
+  background-color: var(--adm-panel) !important;
+  border-color: var(--adm-line) !important;
+  color: var(--adm-ink) !important;
+}
+.admin-v2 [class*='bg-zinc-950'],
+.admin-v2 [class*='bg-zinc-900'],
+.admin-v2 [class*='bg-[#0d1526]'],
+.admin-v2 [class*='bg-[#0b0c0f]'],
+.admin-v2 [class*='bg-[#111318]'] {
+  background-color: var(--adm-canvas) !important;
+}
+.admin-v2 [class*='border-zinc-200'],
+.admin-v2 [class*='border-zinc-300'],
+.admin-v2 [class*='border-white/'] {
+  border-color: var(--adm-line) !important;
+}
+.admin-v2 [class*='border-white/[0.06]'],
+.admin-v2 [class*='border-white/[0.08]'] {
+  border-color: var(--adm-line) !important;
+}
+
+/* ── Text overrides ─────────────────────────────────────────────────────── */
+.admin-v2 [class*='text-zinc-900'],
+.admin-v2 [class*='text-zinc-950'],
+.admin-v2 [class*='text-zinc-800'] {
+  color: var(--adm-ink) !important;
+}
+.admin-v2 [class*='text-zinc-700'],
+.admin-v2 [class*='text-zinc-600'] {
+  color: var(--adm-ink-2) !important;
+}
+.admin-v2 [class*='text-zinc-500'],
+.admin-v2 [class*='text-zinc-400'] {
+  color: var(--adm-ink-3) !important;
+}
+.admin-v2 [class*='text-white'] {
+  color: var(--adm-ink) !important;
+}
+
+/* Purple utility classes → secondary slate-blue */
+.admin-v2 [class*='text-purple-'] {
+  color: var(--adm-purple) !important;
+}
+.admin-v2 [class*='bg-purple-'] {
+  background-color: var(--adm-purple-soft) !important;
+  color: var(--adm-purple) !important;
+}
+.admin-v2 [class*='border-purple-'] {
+  border-color: var(--adm-accent-line) !important;
+}
+
+/* ── Table ──────────────────────────────────────────────────────────────── */
+.admin-v2 table {
+  background: transparent !important;
+  width: 100%;
+  border-collapse: collapse;
+}
+.admin-v2 thead tr,
+.admin-v2 [class*='bg-zinc-50'] thead tr {
+  background: var(--adm-canvas-2) !important;
+  border-bottom: 1px solid var(--adm-line) !important;
+}
+.admin-v2 thead th {
+  padding: 10px 14px !important;
+  font-family: var(--adm-sans) !important;
+  font-size: 12px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  color: var(--adm-ink-3) !important;
+  text-align: left !important;
+  border-bottom: 1px solid var(--adm-line) !important;
+  background: var(--adm-canvas-2) !important;
+}
+.admin-v2 tbody tr {
+  border-bottom: 1px solid var(--adm-line) !important;
+  background: transparent !important;
+  transition: background 0.1s;
+}
+.admin-v2 tbody tr:hover {
+  background: var(--adm-panel-2) !important;
+}
+.admin-v2 tbody td {
+  padding: 12px 14px !important;
+  color: var(--adm-ink-2) !important;
+  font-size: 13px !important;
+  vertical-align: middle !important;
+  background: transparent !important;
+}
+.admin-v2 tbody td strong,
+.admin-v2 tbody td b,
+.admin-v2 tbody td [class*='font-semibold'],
+.admin-v2 tbody td [class*='font-medium'] {
+  color: var(--adm-ink) !important;
+}
+
+/* ── Inputs / textareas / selects ───────────────────────────────────────── */
+.admin-v2 input:not([type='checkbox']):not([type='radio']):not([type='range']),
+.admin-v2 textarea,
+.admin-v2 select {
+  background: var(--adm-panel) !important;
+  border: 1px solid var(--adm-line-strong) !important;
+  border-radius: 10px !important;
+  color: var(--adm-ink) !important;
+  font-family: var(--adm-sans) !important;
+  font-size: 13px !important;
+  padding: 8px 12px !important;
+  outline: none !important;
+  transition: border-color 0.15s;
+}
+.admin-v2 input:focus,
+.admin-v2 textarea:focus,
+.admin-v2 select:focus {
+  border-color: var(--adm-accent) !important;
+  box-shadow: 0 0 0 3px var(--adm-accent-soft) !important;
+}
+.admin-v2 input::placeholder,
+.admin-v2 textarea::placeholder {
+  color: var(--adm-ink-4) !important;
+}
+/* Checkboxes */
+.admin-v2 input[type='checkbox'],
+.admin-v2 input[type='radio'] {
+  accent-color: var(--adm-accent) !important;
+  background: var(--adm-panel-2) !important;
+  border-color: var(--adm-line-strong) !important;
+  padding: 0 !important;
+}
+
+/* ── Buttons (Tailwind-styled inside panels) ────────────────────────────── */
+.admin-v2 button:not([style]):not(.adm-nav-btn) {
+  font-family: var(--adm-sans) !important;
+}
+/* Ghost / outline buttons */
+.admin-v2
+  [class*='border'][class*='rounded'][class*='px'][class*='text-']:not(
+    [style]
+  ):not(input):not(select):not(td):not(th):not(tr):not(thead):not(tbody):not(
+    table
+  ) {
+  background: var(--adm-panel) !important;
+  border-color: var(--adm-line-strong) !important;
+  color: var(--adm-ink-2) !important;
+  border-radius: 10px !important;
+}
+.admin-v2
+  [class*='border'][class*='rounded'][class*='px'][class*='text-']:not(
+    [style]
+  ):hover:not(input):not(select) {
+  background: var(--adm-panel-2) !important;
+  color: var(--adm-ink) !important;
+}
+/* Primary / filled buttons */
+.admin-v2 [class*='bg-purple'][class*='text-white'],
+.admin-v2 [class*='bg-indigo'][class*='text-white'] {
+  background: var(--adm-accent) !important;
+  color: var(--adm-accent-ink) !important;
+  border-color: transparent !important;
+}
+/* Danger buttons */
+.admin-v2 [class*='bg-rose'][class*='text-'],
+.admin-v2 [class*='text-rose-'] {
+  color: var(--adm-bad) !important;
+}
+.admin-v2 [class*='bg-rose-'] {
+  background: var(--adm-bad-soft) !important;
+}
+/* Success tones */
+.admin-v2 [class*='text-emerald-'] {
+  color: var(--adm-ok) !important;
+}
+.admin-v2 [class*='bg-emerald-'] {
+  background: var(--adm-ok-soft) !important;
+}
+/* Warning tones */
+.admin-v2 [class*='text-amber-'] {
+  color: var(--adm-warn) !important;
+}
+.admin-v2 [class*='bg-amber-'] {
+  background: var(--adm-warn-soft) !important;
+}
+/* Solid amber-600/700 = primary action button → admin accent */
+.admin-v2 [class*='bg-amber-600'],
+.admin-v2 [class*='bg-amber-700'] {
+  background-color: var(--adm-accent) !important;
+  color: var(--adm-accent-ink) !important;
+}
+/* Solid teal = primary action button → admin accent */
+.admin-v2 [class*='bg-teal-'] {
+  background-color: var(--adm-accent) !important;
+  color: var(--adm-accent-ink) !important;
+}
+/* Info / sky / cyan tones */
+.admin-v2 [class*='text-sky-'],
+.admin-v2 [class*='text-blue-'],
+.admin-v2 [class*='text-cyan-'] {
+  color: var(--adm-info) !important;
+}
+.admin-v2 [class*='bg-sky-'],
+.admin-v2 [class*='bg-blue-'],
+.admin-v2 [class*='bg-cyan-'] {
+  background: var(--adm-info-soft) !important;
+}
+
+/* Tinted borders follow the same tones */
+.admin-v2 [class*='border-emerald-'] {
+  border-color: var(--adm-accent-line) !important;
+}
+.admin-v2 [class*='border-amber-'] {
+  border-color: rgba(245, 164, 91, 0.45) !important;
+}
+.admin-v2 [class*='border-rose-'],
+.admin-v2 [class*='border-red-'] {
+  border-color: rgba(216, 69, 47, 0.28) !important;
+}
+.admin-v2 [class*='border-sky-'],
+.admin-v2 [class*='border-blue-'],
+.admin-v2 [class*='border-cyan-'] {
+  border-color: rgba(201, 184, 30, 0.45) !important;
+}
+
+/* ── Sonner toast (inside admin) ────────────────────────────────────────── */
+.admin-v2 [data-sonner-toast] {
+  background: var(--adm-panel) !important;
+  border: 1px solid var(--adm-line-strong) !important;
+  color: var(--adm-ink) !important;
+  font-family: var(--adm-sans) !important;
+}
+
+/* ── Progress bars (solid fill colours) ────────────────────────────────── */
+.admin-v2 [class*='bg-purple-500'],
+.admin-v2 [class*='bg-purple-600'],
+.admin-v2 [class*='bg-purple-700'],
+.admin-v2 [class*='bg-indigo-500'],
+.admin-v2 [class*='bg-indigo-600'] {
+  background-color: var(--adm-lime) !important;
+  color: var(--adm-accent-ink) !important;
+}
+.admin-v2 [class*='bg-emerald-500'],
+.admin-v2 [class*='bg-emerald-600'] {
+  background-color: var(--adm-lime) !important;
+}
+.admin-v2 [class*='bg-amber-500'],
+.admin-v2 [class*='bg-yellow-500'] {
+  background-color: var(--adm-orange) !important;
+}
+.admin-v2 [class*='bg-rose-500'],
+.admin-v2 [class*='bg-red-500'] {
+  background-color: var(--adm-bad) !important;
+}
+.admin-v2 [class*='bg-sky-500'],
+.admin-v2 [class*='bg-blue-500'],
+.admin-v2 [class*='bg-cyan-500'] {
+  background-color: var(--adm-yellow) !important;
+}
+
+/* ── Progress bar tracks ────────────────────────────────────────────────── */
+.admin-v2 [class*='bg-zinc-200'],
+.admin-v2 [class*='bg-white/10'] {
+  background-color: var(--adm-panel-2) !important;
+}
+
+/* ── Selected / active row highlight ────────────────────────────────────── */
+.admin-v2 [class*='bg-purple-50'],
+.admin-v2 [class*='bg-purple-950'] {
+  background-color: var(--adm-accent-soft) !important;
+}
+
+/* ── LyteNyte data-grid: direct element overrides (bypass @layer ordering) ── */
+/* CSS variables on .admin-v2 alone aren't enough because the grid styles live
+   in @layer ln-grid. These !important rules target the actual rendered attrs. */
+.admin-v2 [data-ln-viewport='true'] {
+  background-color: var(--adm-panel) !important;
+  border-color: var(--adm-line) !important;
+  color: var(--adm-ink-2) !important;
+}
+.admin-v2 [data-ln-header-cell='true'],
+.admin-v2 [data-ln-header-group='true'] {
+  background-color: var(--adm-canvas-2) !important;
+  color: var(--adm-ink-3) !important;
+  border-color: var(--adm-line) !important;
+}
+.admin-v2 [data-ln-header-cell='true']::before,
+.admin-v2 [data-ln-header-group='true']::before {
+  background-color: var(--adm-line) !important;
+}
+.admin-v2 [data-ln-cell='true'] {
+  background-color: var(--adm-panel) !important;
+  color: var(--adm-ink-2) !important;
+  border-color: var(--adm-line) !important;
+}
+.admin-v2 [data-ln-row='true'][data-ln-alternate='true'] [data-ln-cell='true'] {
+  background-color: var(--adm-canvas-2) !important;
+}
+.admin-v2 [data-ln-row='true']:hover::before {
+  background: rgba(17, 17, 17, 0.04) !important;
+}
+.admin-v2 [data-ln-row='true'][data-ln-selected='true']::before {
+  background: var(--adm-accent-soft) !important;
+}
+
+/* ── LyteNyte data-grid: override --ln-* tokens (light theme in admin) ──── */
+/* We map every --ln-* token to our adm design values here. */
+.admin-v2 {
+  --ln-gray-00: var(--adm-canvas);
+  --ln-gray-01: var(--adm-canvas);
+  --ln-gray-02: var(--adm-canvas-2);
+  --ln-gray-05: var(--adm-panel);
+  --ln-gray-10: var(--adm-panel-2);
+  --ln-gray-20: rgba(17, 17, 17, 0.1);
+  --ln-gray-30: rgba(17, 17, 17, 0.16);
+  --ln-gray-40: rgba(17, 17, 17, 0.24);
+  --ln-gray-50: var(--adm-ink-4);
+  --ln-gray-60: var(--adm-ink-3);
+  --ln-gray-70: var(--adm-ink-3);
+  --ln-gray-80: var(--adm-ink-2);
+  --ln-gray-90: var(--adm-ink);
+  --ln-gray-100: var(--adm-ink);
+
+  --ln-bg: var(--adm-panel);
+  --ln-bg-button-light: var(--adm-panel-2);
+  --ln-bg-page: var(--adm-canvas);
+  --ln-bg-light: var(--adm-canvas-2);
+  --ln-bg-strong: var(--adm-panel-2);
+  --ln-bg-row-hover: rgba(17, 17, 17, 0.04);
+  --ln-bg-row-alternate: var(--adm-canvas-2);
+  --ln-bg-ui-panel: var(--adm-panel);
+  --ln-bg-form-field: var(--adm-panel);
+  --ln-bg-floating-panel: var(--adm-panel);
+  --ln-bg-popover: var(--adm-panel);
+
+  --ln-border: var(--adm-line);
+  --ln-border-row: var(--adm-line);
+  --ln-border-strong: var(--adm-line-strong);
+  --ln-border-xstrong: rgba(17, 17, 17, 0.3);
+  --ln-border-icon: var(--adm-ink-3);
+  --ln-border-ui-panel: var(--adm-line);
+  --ln-border-button-light: var(--adm-line-strong);
+  --ln-border-field-and-button: var(--adm-line-strong);
+  --ln-border-field-and-button-shadow: rgba(0, 0, 0, 0);
+  --ln-border-floating-panel: var(--adm-line-strong);
+  --ln-border-popover: var(--adm-line-strong);
+
+  --ln-text: var(--adm-ink-2);
+  --ln-text-dark: var(--adm-ink);
+  --ln-text-light: var(--adm-ink-3);
+  --ln-text-xlight: var(--adm-ink-4);
+
+  --ln-primary-05: rgba(140, 198, 63, 0.08);
+  --ln-primary-10: var(--adm-accent-soft);
+  --ln-primary-30: var(--adm-accent-line);
+  --ln-primary-50: #6fa82d;
+  --ln-primary-70: var(--adm-accent);
+  --ln-primary-90: #3d6d10;
+}
+
+/* ── Radix / Vaul portal overlays inside admin ──────────────────────────── */
+.admin-v2 [data-radix-popper-content-wrapper] [class*='bg-white'],
+.admin-v2 [data-radix-popper-content-wrapper] [class*='bg-zinc'] {
+  background: var(--adm-panel) !important;
+  border-color: var(--adm-line-strong) !important;
+  color: var(--adm-ink) !important;
+}
+
+/* ── Scan / camera panel specific ───────────────────────────────────────── */
+.admin-v2 video {
+  border-radius: 10px;
+}
+
+/* ── Tab / pill active states ───────────────────────────────────────────── */
+.admin-v2 [aria-selected='true'],
+.admin-v2 [data-state='active'] {
+  background: var(--adm-accent-soft) !important;
+  color: var(--adm-ink) !important;
+  border-color: var(--adm-accent-line) !important;
+}
+
+/* ── Dividers / horizontal rules ────────────────────────────────────────── */
+.admin-v2 hr,
+.admin-v2 [class*='border-t'],
+.admin-v2 [class*='border-b'] {
+  border-color: var(--adm-line) !important;
+}
+
+/* ── Tooltip / popover ──────────────────────────────────────────────────── */
+.admin-v2 [role='tooltip'],
+.admin-v2 [data-radix-tooltip-content] {
+  background: var(--adm-panel) !important;
+  border: 1px solid var(--adm-line-strong) !important;
+  color: var(--adm-ink) !important;
+  font-family: var(--adm-sans) !important;
+  font-size: 12px !important;
+  border-radius: 10px !important;
+}
+
+/* ── Gradient backgrounds used in page sections ─────────────────────────── */
+.admin-v2 [class*='bg-[linear-gradient'],
+.admin-v2 [class*='bg-[radial-gradient'] {
+  background: var(--adm-panel) !important;
+}
+
+/* ── Shadow elevations ──────────────────────────────────────────────────── */
+.admin-v2 [class*='shadow-'] {
+  box-shadow: 0 4px 20px rgba(17, 17, 17, 0.05) !important;
+}
+.admin-v2 [class*='shadow-sm'] {
+  box-shadow: 0 1px 3px rgba(17, 17, 17, 0.04) !important;
+}

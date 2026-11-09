@@ -1,0 +1,34 @@
+# Dependencies
+node_modules
+
+# Next.js build output
+.next/
+out/
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# Environment files (only the placeholder example is committed)
+.env*
+!.env.example
+
+# Vercel / Supabase local state
+.vercel
+supabase/.temp/
+supabase/.branches/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.err
+
+# Never commit data: exports, dumps, spreadsheets (public repo)
+*.xlsx
+*.xls
+*.csv
+*.zip
+*.sql.gz
+*.dump
+*.age
