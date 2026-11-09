@@ -80,9 +80,10 @@ jobs:
       - run: npm ci
       # Local Supabase in Docker: applies every migration, then runs the
       # pgTAP access tests in supabase/tests. No project or secrets involved.
-      - run: >
-          npx supabase start -x studio,imgproxy,vector,logflare,edge-runtime,
-          supavisor,realtime,inbucket,mailpit,storage-api,postgres-meta
+      - name: Start local Supabase
+        env:
+          EXCLUDE: studio,imgproxy,vector,logflare,edge-runtime,supavisor,realtime,inbucket,mailpit,storage-api,postgres-meta
+        run: npx supabase start -x "$EXCLUDE"
       - run: npx supabase test db
 
   build:
