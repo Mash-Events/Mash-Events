@@ -7,6 +7,7 @@ import {
 } from '@core/registration/schema';
 import { allow, clientIp, sha256Hex } from '@core/security/rate-limit';
 import { verifyTurnstile } from '@core/security/turnstile';
+import { kickEmailDrain } from '@/lib/kick-email-drain';
 import {
   getPublicEvent,
   submitRegistration,
@@ -121,6 +122,8 @@ export async function POST(
     );
     switch (result.result) {
       case 'created':
+        kickEmailDrain(eventId);
+        return reply(202, ACCEPTED);
       case 'duplicate':
         return reply(202, ACCEPTED);
       case 'closed':

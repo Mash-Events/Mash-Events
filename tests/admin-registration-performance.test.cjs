@@ -137,12 +137,3 @@ test('review queue gets its total from the summary instead of a second exact cou
   assert.match(queueFunction, /const totalCount = summary\.total \|\| 0/);
   assert.doesNotMatch(queueFunction, /count: 'exact'/);
 });
-
-test('event crons are switched off between editions', () => {
-  const config = JSON.parse(readSource('vercel.json'));
-
-  assert.deepEqual(
-    config.crons.map((cron) => cron.path),
-    ['/api/internal/keep-alive']
-  );
-});

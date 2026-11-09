@@ -28,6 +28,24 @@ type Registration = {
 };
 
 type Note = { id: string; body: string; created_at: string };
+type Message = {
+  id: string;
+  channel: string;
+  template_key: string;
+  status: string;
+  delivery_status: string | null;
+  attempts: number;
+  last_error: string | null;
+  created_at: string;
+};
+
+const MESSAGE_LABEL: Record<string, string> = {
+  acknowledgement: 'Registration received',
+  confirmed: 'Confirmed',
+  waitlisted: 'Waitlisted',
+  rejected: 'Not accepted',
+};
+
 type History = {
   from_status: string | null;
   to_status: string;
@@ -59,6 +77,7 @@ export function RegistrationDetail({
   const [registration, setRegistration] = useState<Registration | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [history, setHistory] = useState<History[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [reason, setReason] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +90,7 @@ export function RegistrationDetail({
           eventId,
           `/registrations/${registrationId}`
         ),
-        eventApi<{ notes: Note[]; history: History[] }>(
+        eventApi<{ notes: Note[]; history: History[]; messages: Message[] }>(
           eventId,
           `/registrations/${registrationId}/notes`
         ),
@@ -90,6 +109,7 @@ export function RegistrationDetail({
           setRegistration(detail.registration);
           setNotes(extra.notes ?? []);
           setHistory(extra.history ?? []);
+          setMessages(extra.messages ?? []);
         },
         (e) => {
           if (isActive()) {
@@ -309,6 +329,37 @@ export function RegistrationDetail({
                 </ul>
               ) : (
                 <p className="text-stone-500">No notes yet.</p>
+              )}
+            </section>
+
+            <section className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                Emails
+              </h3>
+              {messages.length ? (
+                <ul className="space-y-1 text-stone-700">
+                  {messages.map((m) => (
+                    <li key={m.id}>
+                      <span className="font-medium">
+                        {MESSAGE_LABEL[m.template_key] ?? m.template_key}
+                      </span>{' '}
+                      ·{' '}
+                      {m.delivery_status ??
+                        (m.status === 'skipped'
+                          ? `not sent (${m.last_error ?? 'skipped'})`
+                          : m.status)}
+                      {m.status === 'retrying'
+                        ? ` · attempt ${m.attempts}`
+                        : ''}
+                      <span className="text-stone-500">
+                        {' '}
+                        · {new Date(m.created_at).toLocaleString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-stone-500">No emails yet.</p>
               )}
             </section>
 

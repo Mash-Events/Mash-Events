@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { eventRoute, rpcError, RouteError } from '@core/http/event-route';
 import { isUuid } from '@core/db/events';
 import { REGISTRATION_STATUSES } from '@core/registration/transitions';
+import { kickEmailDrain } from '@/lib/kick-email-drain';
 
 // POST /api/admin/events/<eventId>/registrations/<registrationId>/status
 // The RPC re-checks pin, permission and the allowed transition (§5.7, §7).
@@ -43,6 +44,7 @@ export const POST = eventRoute(
         'This registration changed since you loaded it. Refresh and try again.'
       );
     }
+    if (result.result === 'updated') kickEmailDrain(event.id);
     return { registrationId, ...result };
   }
 );

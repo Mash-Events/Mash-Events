@@ -11,7 +11,7 @@ export const GET = eventRoute(
   async ({ db, params }) => {
     const registrationId = params.registrationId;
     if (!isUuid(registrationId)) throw new RouteError(404, 'not_found');
-    const [notes, history] = await Promise.all([
+    const [notes, history, messages] = await Promise.all([
       db
         .from('review_notes')
         .select('id, body, author_user_id, created_at')
@@ -22,9 +22,23 @@ export const GET = eventRoute(
         .select('from_status, to_status, reason, actor_user_id, created_at')
         .eq('registration_id', registrationId)
         .order('created_at', { ascending: false }),
+      db
+        .from('message_job_items')
+        .select(
+          'id, channel, template_key, status, delivery_status, attempts, last_error, created_at, updated_at'
+        )
+        .eq('registration_id', registrationId)
+        .order('created_at', { ascending: false }),
     ]);
-    if (notes.error || history.error) throw new RouteError(500, 'server_error');
-    return { registrationId, notes: notes.data, history: history.data };
+    if (notes.error || history.error || messages.error) {
+      throw new RouteError(500, 'server_error');
+    }
+    return {
+      registrationId,
+      notes: notes.data,
+      history: history.data,
+      messages: messages.data,
+    };
   }
 );
 

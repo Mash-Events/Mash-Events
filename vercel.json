@@ -5,6 +5,10 @@
     {
       "path": "/api/internal/keep-alive",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/internal/messages/drain",
+      "schedule": "15 4 * * *"
     }
   ]
 }
