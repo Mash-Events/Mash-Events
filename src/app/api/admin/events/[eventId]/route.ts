@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { eventRoute, rpcError } from '@core/http/event-route';
+import { revalidateEventContent } from '@core/content/revalidate';
 
 // GET/PATCH /api/admin/events/<eventId> — event settings (events.manage).
 // PATCH is allowed on archived events so a super admin can unarchive; the
@@ -57,6 +58,7 @@ export const PATCH = eventRoute(
       p_changes: body,
     });
     if (error) throw rpcError(error);
+    revalidateEventContent(event.id);
     const { data } = await db
       .from('events')
       .select(FIELDS)

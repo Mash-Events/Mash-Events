@@ -19,7 +19,25 @@ export type OrgEntry = {
   events: readonly EventEntry[];
 };
 
-export const orgs: readonly OrgEntry[] = [];
+/** Real client organisations. Add one entry per org; events by UUID. */
+const productionOrgs: readonly OrgEntry[] = [];
+
+/** Local demo (supabase/demo.sql). Never served in production. */
+export const DEMO_ORG_ID = '0d6b6f5e-4a1c-4c3e-9a2b-6d3c1e7f8a10';
+export const DEMO_EVENT_ID = '5f2c8e3a-7b4d-4e19-8c6a-2a9d4b7e1c35';
+const devOrgs: readonly OrgEntry[] = [
+  {
+    id: DEMO_ORG_ID,
+    slug: 'demo',
+    hosts: ['demo.localhost'],
+    events: [{ id: DEMO_EVENT_ID, slug: 'launch-webinar' }],
+  },
+];
+
+export const orgs: readonly OrgEntry[] =
+  process.env.MASH_ENV === 'production'
+    ? productionOrgs
+    : [...productionOrgs, ...devOrgs];
 
 export function findOrgByHost(host: string): OrgEntry | undefined {
   const normalised = host.toLowerCase().replace(/:\d+$/, '');

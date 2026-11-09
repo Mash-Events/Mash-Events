@@ -53,8 +53,11 @@ select ok(
 select ok(
   not exists (select 1 from information_schema.role_table_grants
               where grantee = 'authenticated' and table_schema = 'public'
-                and privilege_type in ('INSERT', 'UPDATE', 'DELETE')),
-  'authenticated cannot write platform tables directly'
+                and privilege_type in ('INSERT', 'UPDATE', 'DELETE')
+                -- content tables: pinned, permission-checked policies (§12.3)
+                and table_name not in ('event_speakers', 'event_sessions',
+                                       'event_session_speakers', 'event_sponsors')),
+  'authenticated cannot write non-content tables directly'
 );
 select is(
   (select count(*)::int from information_schema.schemata where schema_name = 'app'),
