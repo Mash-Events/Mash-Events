@@ -15,6 +15,11 @@ export type EmailContext = {
   orgName: string;
   eventUrl: string | null;
   subjectOverride: string | null;
+  /** Personal webinar join link (signed per registrant and event). */
+  joinUrl?: string | null;
+  /** Subject and body of a custom (bulk or scheduled) message. */
+  customSubject?: string | null;
+  customBody?: string | null;
 };
 
 export type RenderedEmail = { subject: string; html: string; text: string };
@@ -24,6 +29,7 @@ export const EMAIL_TEMPLATES = [
   'confirmed',
   'waitlisted',
   'rejected',
+  'custom',
 ] as const;
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATES)[number];
 
@@ -81,6 +87,9 @@ function copyFor(ctx: EmailContext): Copy {
           isWebinar
             ? 'We will email your joining link before the session starts.'
             : 'We will share entry details closer to the event.',
+          ...(isWebinar && ctx.joinUrl
+            ? ['Your personal joining link is below. Please do not share it.']
+            : []),
           `Your registration code is ${ctx.registrationCode}.`,
         ],
       };
@@ -102,6 +111,19 @@ function copyFor(ctx: EmailContext): Copy {
           'We hope to see you at a future event.',
         ],
       };
+    case 'custom':
+      if (!ctx.customSubject || !ctx.customBody) {
+        throw new Error('custom email needs a subject and body');
+      }
+      return {
+        subject: ctx.customSubject,
+        heading: ctx.customSubject,
+        // Blank lines separate paragraphs; single line breaks become spaces.
+        paragraphs: ctx.customBody
+          .split(/\n{2,}/)
+          .map((part) => part.replace(/\s*\n\s*/g, ' ').trim())
+          .filter(Boolean),
+      };
     default:
       throw new Error(`unknown email template ${ctx.templateKey}`);
   }
@@ -117,6 +139,7 @@ export function renderEmail(ctx: EmailContext): RenderedEmail {
     greeting,
     '',
     ...copy.paragraphs.flatMap((p) => [p, '']),
+    ...(ctx.joinUrl ? [`Join the session: ${ctx.joinUrl}`, ''] : []),
     ...(ctx.eventUrl ? [`Event page: ${ctx.eventUrl}`, ''] : []),
     signOff,
     `${ctx.eventName} · organised by ${ctx.orgName}`,
@@ -136,6 +159,7 @@ export function renderEmail(ctx: EmailContext): RenderedEmail {
 <h1 style="margin:0 0 20px;font-size:22px">${escapeHtml(copy.heading)}</h1>
 ${p(greeting)}
 ${copy.paragraphs.map(p).join('\n')}
+${ctx.joinUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.joinUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Join the session</a></p>` : ''}
 ${ctx.eventUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.eventUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">View event page</a></p>` : ''}
 ${p(signOff)}
 </td></tr></table>

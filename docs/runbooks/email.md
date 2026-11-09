@@ -47,3 +47,30 @@ Vercel's Hobby plan only allows daily cron jobs, so failed sends are retried
 once a day. Faster options: Vercel Pro (set the schedule to `* * * * *`), or a
 Supabase `pg_cron` job that calls the drain URL every few minutes with the
 cron secret.
+
+## Webinar join links
+
+Confirmed registrants of a webinar (or hybrid) event get a personal link,
+`https://<org host>/<event>/join/<token>`, in their confirmation email and in
+any message sent with "Include … join link". The token is signed with a key
+derived for that event from `LINK_MASTER_SECRET` (set it in production; 32+
+random bytes), so a link only works for its own event. Opening it:
+
+- before the join window: a page with the opening time;
+- inside the window (set in Settings → Webinar, default 30 minutes before
+  start, until the end time): records attendance and redirects to the platform
+  link, which is never shown publicly;
+- if the registration is no longer confirmed, or the link was altered: refused.
+
+Changing `LINK_MASTER_SECRET` invalidates every link already sent.
+
+## Bulk messages and reminders
+
+Messages (in each event's workspace) sends to chosen status groups: preview
+(the list is frozen), send a test to yourself, then type the event name.
+Scheduling makes it a reminder; the audience is worked out again at send time,
+so people confirmed later are included. Scheduled messages are released by the
+drain, so **reminders are only as punctual as the cron**: with the daily
+Hobby cron they can be up to a day late. Before relying on reminders, run the
+drain at least every 5 minutes (Vercel Pro, or Supabase `pg_cron` + `pg_net`
+calling the drain URL with the cron secret).

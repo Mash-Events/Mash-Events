@@ -23,6 +23,11 @@ export default async function WorkspaceLayout({
       show: permissions.includes('registrations.read'),
     },
     {
+      href: `${base}/messages`,
+      label: 'Messages',
+      show: permissions.includes('messages.bulk'),
+    },
+    {
       href: `${base}/settings`,
       label: 'Settings',
       show: permissions.includes('events.manage'),

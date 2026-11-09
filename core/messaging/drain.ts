@@ -5,6 +5,8 @@ import {
   finishMessageItem,
   type ClaimedItem,
 } from '../db/privileged/messaging';
+import { releaseDueMessageIntents } from '../db/privileged/webinar';
+import { linkSecret, signJoinToken } from '../passes/join-token';
 import { renderEmail } from './templates';
 import { sendEmail } from './email-transport';
 
@@ -41,9 +43,29 @@ export function fromHeader(displayName: string, address: string): string {
   return `"${safe}" <${address}>`;
 }
 
+/** Personal join link for webinar confirmations and messages that ask for it. */
+async function joinUrlFor(item: ClaimedItem, eventUrl: string | null) {
+  const isOnline =
+    item.event_kind === 'webinar' || item.event_kind === 'hybrid';
+  const wanted =
+    (item.template_key === 'confirmed' && isOnline) ||
+    (item.template_key === 'custom' &&
+      item.include_join_link &&
+      item.registration_status === 'confirmed');
+  const secret = linkSecret();
+  if (!wanted || !eventUrl || !secret) return null;
+  const token = await signJoinToken(
+    secret,
+    item.event_id,
+    item.registration_id
+  );
+  return `${eventUrl}/join/${token}`;
+}
+
 async function sendOne(item: ClaimedItem, options: DrainOptions) {
   const defaultFrom =
     process.env.RESEND_DEFAULT_FROM?.trim() || 'events@mash.example';
+  const eventUrl = options.eventUrl(item.org_id, item.event_slug);
   const rendered = renderEmail({
     templateKey: item.template_key,
     firstName: item.first_name,
@@ -54,8 +76,11 @@ async function sendOne(item: ClaimedItem, options: DrainOptions) {
     eventStartsAt: item.event_starts_at,
     eventEndsAt: item.event_ends_at,
     orgName: item.org_name,
-    eventUrl: options.eventUrl(item.org_id, item.event_slug),
+    eventUrl,
     subjectOverride: item.subject_override,
+    joinUrl: await joinUrlFor(item, eventUrl),
+    customSubject: item.job_subject,
+    customBody: item.job_body,
   });
   return sendEmail({
     from: fromHeader(item.from_name ?? item.event_name, defaultFrom),
@@ -78,6 +103,9 @@ export async function drainEmail(options: DrainOptions): Promise<DrainReport> {
   const batchSize = options.batchSize ?? 25;
   const report: DrainReport = { claimed: 0, sent: 0, retried: 0, failed: 0 };
 
+  // Scheduled messages whose time has come become queued items first.
+  if (!options.onlyEventId) await releaseDueMessageIntents();
+
   const eventIds = options.onlyEventId
     ? [options.onlyEventId]
     : await eventsWithDueMessages('email');
@@ -96,7 +124,11 @@ export async function drainEmail(options: DrainOptions): Promise<DrainReport> {
           });
           continue;
         }
-        const result = await sendOne(item, options);
+        const result = await sendOne(item, options).catch((error) => ({
+          ok: false as const,
+          retryable: false,
+          error: `render: ${error instanceof Error ? error.message : 'failed'}`,
+        }));
         if (result.ok) {
           await finishMessageItem(
             eventId,

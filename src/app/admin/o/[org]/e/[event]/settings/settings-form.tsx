@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminApiError, eventApi } from '@core/admin/api-client';
+import { fromLocalInput, toLocalInput } from '@core/admin/time';
 
 type EventSettings = {
   name: string;
@@ -14,6 +15,9 @@ type EventSettings = {
   capacity: number | null;
   waitlist_enabled: boolean;
   review_mode: 'manual' | 'auto_confirm';
+  settings?: { join_url?: string | null; join_window_minutes?: number };
+  join_url?: string | null;
+  join_window_minutes?: number;
 };
 
 const STATUSES = [
@@ -33,31 +37,6 @@ const DATE_FIELDS = [
   ['registration_closes_at', 'Registration closes'],
 ] as const;
 
-/** ISO instant ↔ "YYYY-MM-DDTHH:mm" in the event's timezone. */
-function toLocalInput(iso: string | null, timeZone: string): string {
-  if (!iso) return '';
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(new Date(iso));
-  const get = (type: string) => parts.find((p) => p.type === type)?.value;
-  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
-}
-
-function fromLocalInput(value: string, timeZone: string): string | null {
-  if (!value) return null;
-  // Interpret the wall-clock time in the event timezone.
-  const guess = new Date(`${value}:00Z`);
-  const shown = toLocalInput(guess.toISOString(), timeZone);
-  const offsetMs = new Date(`${shown}:00Z`).getTime() - guess.getTime();
-  return new Date(guess.getTime() - offsetMs).toISOString();
-}
-
 export function SettingsForm({
   eventId,
   timezone,
@@ -75,7 +54,13 @@ export function SettingsForm({
 
   useEffect(() => {
     eventApi<{ event: EventSettings }>(eventId, '')
-      .then((res) => setSettings(res.event))
+      .then((res) =>
+        setSettings({
+          ...res.event,
+          join_url: res.event.settings?.join_url ?? null,
+          join_window_minutes: res.event.settings?.join_window_minutes ?? 30,
+        })
+      )
       .catch((error: AdminApiError) =>
         setMessage({ kind: 'error', text: error.message })
       );
@@ -116,9 +101,15 @@ export function SettingsForm({
           capacity: settings.capacity,
           waitlist_enabled: settings.waitlist_enabled,
           review_mode: settings.review_mode,
+          join_url: settings.join_url || null,
+          join_window_minutes: settings.join_window_minutes ?? 30,
         },
       });
-      setSettings(res.event);
+      setSettings({
+        ...res.event,
+        join_url: res.event.settings?.join_url ?? null,
+        join_window_minutes: res.event.settings?.join_window_minutes ?? 30,
+      });
       setMessage({ kind: 'ok', text: 'Saved.' });
       router.refresh();
     } catch (error) {
@@ -215,6 +206,39 @@ export function SettingsForm({
           />
         </label>
       </div>
+
+      <fieldset className="space-y-4 rounded-md border border-stone-200 p-4">
+        <legend className="px-1 text-sm font-medium text-stone-700">
+          Webinar
+        </legend>
+        <label className="block text-sm font-medium text-stone-700">
+          Platform link (Zoom, Teams, YouTube…)
+          <input
+            type="url"
+            className={input}
+            placeholder="https://"
+            value={settings.join_url ?? ''}
+            onChange={(e) => update({ join_url: e.target.value })}
+          />
+          <span className="mt-1 block text-xs font-normal text-stone-500">
+            Never shown publicly. Confirmed registrants get a personal link that
+            redirects here during the join window.
+          </span>
+        </label>
+        <label className="block text-sm font-medium text-stone-700">
+          Join opens (minutes before start)
+          <input
+            type="number"
+            min={0}
+            max={240}
+            className={input}
+            value={settings.join_window_minutes ?? 30}
+            onChange={(e) =>
+              update({ join_window_minutes: Number(e.target.value) || 0 })
+            }
+          />
+        </label>
+      </fieldset>
 
       <label className="flex items-center gap-2 text-sm text-stone-700">
         <input

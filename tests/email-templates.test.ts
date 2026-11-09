@@ -25,7 +25,12 @@ const base: EmailContext = {
 
 test('every template renders a subject, HTML and text', () => {
   for (const templateKey of EMAIL_TEMPLATES) {
-    const email = renderEmail({ ...base, templateKey });
+    const email = renderEmail({
+      ...base,
+      templateKey,
+      customSubject: 'Launch Webinar starts soon',
+      customBody: 'See you there.',
+    });
     assert.ok(email.subject.includes('Launch Webinar'), templateKey);
     assert.match(email.html, /^<!doctype html>/);
     assert.match(email.text, /Dear Asha,/);
@@ -60,4 +65,30 @@ test('a per-event subject override wins and is length-limited', () => {
 
 test('unknown templates are refused', () => {
   assert.throws(() => renderEmail({ ...base, templateKey: 'marketing' }));
+});
+
+test('custom messages keep paragraphs and add the personal join link', () => {
+  const email = renderEmail({
+    ...base,
+    templateKey: 'custom',
+    customSubject: 'Starts in 10 minutes',
+    customBody: 'First line\ncontinues here.\n\nSecond paragraph.',
+    joinUrl: 'https://demo.mash.example/launch-webinar/join/v1.abc.def',
+  });
+  assert.equal(email.subject, 'Starts in 10 minutes');
+  assert.match(email.text, /First line continues here\.\n\nSecond paragraph\./);
+  assert.match(email.text, /Join the session: https:\/\/demo\.mash\.example/);
+  assert.match(email.html, />Join the session</);
+  assert.throws(() =>
+    renderEmail({ ...base, templateKey: 'custom', customSubject: 'x' })
+  );
+});
+
+test('webinar confirmations carry the join link when there is one', () => {
+  const email = renderEmail({
+    ...base,
+    joinUrl: 'https://demo.mash.example/launch-webinar/join/v1.abc.def',
+  });
+  assert.match(email.text, /personal joining link/);
+  assert.match(email.text, /Join the session: /);
 });

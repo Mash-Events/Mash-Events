@@ -68,6 +68,18 @@ export const getAdminSession = cache(async (): Promise<AdminSession | null> => {
   };
 });
 
+/**
+ * Asks the Auth server (not just the JWT) whether the session is still
+ * valid. Used before sensitive actions such as confirming a bulk send (§6.4).
+ */
+export async function getAdminUserFresh(): Promise<{ id: string } | null> {
+  if (!getSupabaseConfig().configured) return null;
+  const supabase = await createAuthClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return null;
+  return { id: data.user.id };
+}
+
 /** The signed-in user's live memberships (RLS: users read their own). */
 export const getMyMemberships = cache(async (): Promise<Membership[]> => {
   const session = await getAdminSession();

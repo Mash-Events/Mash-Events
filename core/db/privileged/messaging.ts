@@ -27,6 +27,9 @@ export type ClaimedItem = {
   from_name: string | null;
   reply_to: string | null;
   subject_override: string | null;
+  job_subject: string | null;
+  job_body: string | null;
+  include_join_link: boolean;
 };
 
 export async function eventsWithDueMessages(

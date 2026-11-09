@@ -31,11 +31,20 @@ const changes = z
     capacity: z.number().int().positive().max(1_000_000).nullable().optional(),
     waitlist_enabled: z.boolean().optional(),
     review_mode: z.enum(['manual', 'auto_confirm']).optional(),
+    join_url: z
+      .string()
+      .trim()
+      .url()
+      .startsWith('https://', 'The webinar link must start with https://')
+      .max(500)
+      .nullable()
+      .optional(),
+    join_window_minutes: z.number().int().min(0).max(240).optional(),
   })
   .strict();
 
 const FIELDS =
-  'id, slug, name, kind, status, timezone, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, waitlist_enabled, review_mode';
+  'id, slug, name, kind, status, timezone, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, waitlist_enabled, review_mode, settings';
 
 export const GET = eventRoute(
   { permission: 'events.manage' },

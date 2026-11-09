@@ -80,6 +80,19 @@ function eventRewrite(
     };
   }
 
+  // /<event>/join/<token> → the join redirect for this event (§9.3).
+  if (rest[0] === 'join') {
+    if (rest.length !== 2 || !/^[A-Za-z0-9._-]{10,120}$/.test(rest[1])) {
+      return { kind: 'not_found' };
+    }
+    return {
+      kind: 'rewrite',
+      pathname: `/api/public/events/${event.id}/join/${rest[1]}`,
+      orgId: org.id,
+      eventId: event.id,
+    };
+  }
+
   const tail = rest.length ? `/${rest.join('/')}` : '';
   return {
     kind: 'rewrite',

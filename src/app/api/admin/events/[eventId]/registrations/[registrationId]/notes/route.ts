@@ -11,7 +11,7 @@ export const GET = eventRoute(
   async ({ db, params }) => {
     const registrationId = params.registrationId;
     if (!isUuid(registrationId)) throw new RouteError(404, 'not_found');
-    const [notes, history, messages] = await Promise.all([
+    const [notes, history, messages, attendance] = await Promise.all([
       db
         .from('review_notes')
         .select('id, body, author_user_id, created_at')
@@ -29,6 +29,11 @@ export const GET = eventRoute(
         )
         .eq('registration_id', registrationId)
         .order('created_at', { ascending: false }),
+      db
+        .from('webinar_attendance')
+        .select('first_joined_at, last_joined_at, join_count')
+        .eq('registration_id', registrationId)
+        .maybeSingle(),
     ]);
     if (notes.error || history.error || messages.error) {
       throw new RouteError(500, 'server_error');
@@ -38,6 +43,7 @@ export const GET = eventRoute(
       notes: notes.data,
       history: history.data,
       messages: messages.data,
+      attendance: attendance.data,
     };
   }
 );

@@ -12,11 +12,16 @@ export default async function WorkspaceOverview({
   const { event, permissions } = await loadWorkspace(org, eventSlug);
 
   let counts: Record<string, number> = {};
+  let joined: number | null = null;
   if (permissions.includes('registrations.read')) {
     const db = await createEventClient(event.id);
-    const { data } = await db.rpc('registration_summary', {
-      p_event_id: event.id,
-    });
+    const [{ data }, attendance] = await Promise.all([
+      db.rpc('registration_summary', { p_event_id: event.id }),
+      db
+        .from('webinar_attendance')
+        .select('registration_id', { count: 'exact', head: true }),
+    ]);
+    joined = attendance.count ?? 0;
     counts = Object.fromEntries(
       (data ?? []).map((row: { status: string; total: number }) => [
         row.status,
@@ -51,6 +56,7 @@ export default async function WorkspaceOverview({
           </div>
           <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-6">
             <Stat label="Total" value={total} />
+            {joined ? <Stat label="Joined webinar" value={joined} /> : null}
             {REGISTRATION_STATUSES.map((status) => (
               <Stat
                 key={status}

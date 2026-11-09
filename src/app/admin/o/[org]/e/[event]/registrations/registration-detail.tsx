@@ -78,6 +78,10 @@ export function RegistrationDetail({
   const [notes, setNotes] = useState<Note[]>([]);
   const [history, setHistory] = useState<History[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [attendance, setAttendance] = useState<{
+    first_joined_at: string;
+    join_count: number;
+  } | null>(null);
   const [reason, setReason] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -90,10 +94,12 @@ export function RegistrationDetail({
           eventId,
           `/registrations/${registrationId}`
         ),
-        eventApi<{ notes: Note[]; history: History[]; messages: Message[] }>(
-          eventId,
-          `/registrations/${registrationId}/notes`
-        ),
+        eventApi<{
+          notes: Note[];
+          history: History[];
+          messages: Message[];
+          attendance: { first_joined_at: string; join_count: number } | null;
+        }>(eventId, `/registrations/${registrationId}/notes`),
       ]),
     [eventId, registrationId]
   );
@@ -110,6 +116,7 @@ export function RegistrationDetail({
           setNotes(extra.notes ?? []);
           setHistory(extra.history ?? []);
           setMessages(extra.messages ?? []);
+          setAttendance(extra.attendance ?? null);
         },
         (e) => {
           if (isActive()) {
@@ -240,6 +247,14 @@ export function RegistrationDetail({
               <Row
                 label="Registered"
                 value={new Date(registration.created_at).toLocaleString()}
+              />
+              <Row
+                label="Joined webinar"
+                value={
+                  attendance
+                    ? `${new Date(attendance.first_joined_at).toLocaleString()} (${attendance.join_count}×)`
+                    : 'Not yet'
+                }
               />
               <Row
                 label="Consent"
