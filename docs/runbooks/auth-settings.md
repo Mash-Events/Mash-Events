@@ -20,9 +20,12 @@ See `docs/system-design.md` §6.
 | Site URL                                | `http://admin.localhost:3000` (until domain)  |
 | Redirect allow list                     | `http://admin.localhost:3000/auth/**`         |
 
-The security advisor's two remaining warnings are expected: `grant_membership`
-and `revoke_membership` are callable by signed-in users by design and check for
-a super admin inside.
+The security advisor's `*_security_definer_function_executable` warnings are
+expected. `public_event_content` is the intended public read path (published,
+non-personal content only). The admin RPCs (`grant_membership`,
+`revoke_membership`, `create_organization`, `create_event`, `update_event`,
+`transition_registration`, `add_review_note`) are callable by signed-in users by
+design and check the event pin and permission inside.
 
 ## Still to do
 
