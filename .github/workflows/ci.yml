@@ -68,6 +68,23 @@ jobs:
       # scripts/audit-check.mjs.
       - run: npm run audit:ci
 
+  db:
+    name: Database Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Local Supabase in Docker: applies every migration, then runs the
+      # pgTAP access tests in supabase/tests. No project or secrets involved.
+      - run: >
+          npx supabase start -x studio,imgproxy,vector,logflare,edge-runtime,
+          supavisor,realtime,inbucket,mailpit,storage-api,postgres-meta
+      - run: npx supabase test db
+
   build:
     name: Build
     runs-on: ubuntu-latest

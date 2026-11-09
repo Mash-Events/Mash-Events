@@ -60,8 +60,9 @@ test('the proxy applies the check to protected routes before passing the request
   const guard = proxy.indexOf('isCrossSiteStateChange({');
   const next = proxy.indexOf('return NextResponse.next(');
   assert.ok(guard > 0 && guard < next);
-  assert.match(
-    proxy,
-    /isProtectedRoute\(request\) &&\s*isCrossSiteStateChange/
+  // Admin-host requests are checked before the session is touched.
+  assert.ok(
+    proxy.indexOf('isCrossSiteStateChange({') <
+      proxy.indexOf('handleAdminSession(')
   );
 });
