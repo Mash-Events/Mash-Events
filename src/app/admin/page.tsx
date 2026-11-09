@@ -44,11 +44,21 @@ export default async function AdminHome() {
             {isPlatformAdmin(memberships) ? ' · super admin' : ''}
           </p>
         </div>
-        <form action={signOut}>
-          <button type="submit" className="text-sm text-stone-600 underline">
-            Sign out
-          </button>
-        </form>
+        <div className="flex items-center gap-4">
+          {isPlatformAdmin(memberships) ? (
+            <a
+              href="/admin/platform"
+              className="text-sm font-medium text-stone-900 underline"
+            >
+              Platform
+            </a>
+          ) : null}
+          <form action={signOut}>
+            <button type="submit" className="text-sm text-stone-600 underline">
+              Sign out
+            </button>
+          </form>
+        </div>
       </header>
 
       {error ? (

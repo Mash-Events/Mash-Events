@@ -58,6 +58,12 @@ const config = [
     },
   },
   {
+    // Exception: inviting members needs the Supabase Auth admin API. The
+    // membership itself is still granted with the super admin's session.
+    files: ['src/app/api/admin/platform/members/**/*.{js,jsx,ts,tsx}'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
+  {
     files: ['sites/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'no-restricted-imports': [

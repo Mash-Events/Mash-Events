@@ -17,6 +17,49 @@ export function isUuid(value: unknown): value is string {
   return typeof value === 'string' && UUID.test(value);
 }
 
+type EventRow = {
+  id: string;
+  org_id: string;
+  slug: string;
+  name: string;
+  status: string;
+  timezone: string;
+};
+
+function toWorkspaceEvent(row: EventRow): WorkspaceEvent {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    slug: row.slug,
+    name: row.name,
+    status: row.status,
+    timezone: row.timezone,
+  };
+}
+
+/** Workspace URL /admin/o/<org>/e/<event> → event, if the user may see it. */
+export async function loadEventBySlugs(
+  orgSlug: string,
+  eventSlug: string
+): Promise<(WorkspaceEvent & { orgName: string; orgSlug: string }) | null> {
+  const supabase = await createAuthClient();
+  const { data, error } = await supabase
+    .from('events')
+    .select(
+      'id, org_id, slug, name, status, timezone, organizations!inner(slug, name)'
+    )
+    .eq('slug', eventSlug)
+    .eq('organizations.slug', orgSlug)
+    .maybeSingle();
+  if (error || !data) return null;
+  const org = data.organizations as unknown as { slug: string; name: string };
+  return {
+    ...toWorkspaceEvent(data as EventRow),
+    orgName: org.name,
+    orgSlug: org.slug,
+  };
+}
+
 /**
  * Loads an event the signed-in admin may see. RLS on `events` returns nothing
  * for events outside the user's memberships, so a foreign id is just "not

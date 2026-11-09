@@ -28,6 +28,13 @@ function withoutInternalHeaders(request: NextRequest) {
   return headers;
 }
 
+function requestUrlForHost(request: NextRequest): string {
+  const url = new URL(request.url);
+  const host = request.headers.get('host');
+  if (host) url.host = host;
+  return url.toString();
+}
+
 function notFound() {
   return new NextResponse('Not found', {
     status: 404,
@@ -68,7 +75,9 @@ export default async function proxy(request: NextRequest) {
     if (
       isCrossSiteStateChange({
         method: request.method,
-        url: request.url,
+        // Compare against the host the browser used (request.url may carry
+        // the server's bind address instead, e.g. in `next dev`).
+        url: requestUrlForHost(request),
         origin: request.headers.get('origin'),
         secFetchSite: request.headers.get('sec-fetch-site'),
       })
