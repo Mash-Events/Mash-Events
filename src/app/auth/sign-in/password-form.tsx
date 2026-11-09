@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { signInWithPassword } from '@core/auth/actions';
+import { TurnstileWidget } from '@core/ui/turnstile-widget';
 import { Field, FormNotice, SubmitButton } from '../_components/fields';
 
 export function PasswordForm({ next }: { next: string }) {
@@ -23,6 +24,7 @@ export function PasswordForm({ next }: { next: string }) {
         autoComplete="current-password"
         required
       />
+      <TurnstileWidget action="login" />
       <FormNotice state={state} />
       <SubmitButton>Sign in</SubmitButton>
     </form>

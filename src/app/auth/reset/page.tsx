@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useActionState } from 'react';
 import { requestPasswordReset } from '@core/auth/actions';
+import { TurnstileWidget } from '@core/ui/turnstile-widget';
 import { Field, FormNotice, SubmitButton } from '../_components/fields';
 
 export default function ResetPage() {
@@ -18,6 +19,7 @@ export default function ResetPage() {
           autoComplete="username"
           required
         />
+        <TurnstileWidget action="password_reset" />
         <FormNotice state={state} />
         <SubmitButton>Send reset link</SubmitButton>
       </form>

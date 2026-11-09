@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test \"tests/*.test.cjs\" \"tests/*.test.ts\"",
     "audit:ci": "node scripts/audit-check.mjs",
-    "sb": "node scripts/supabase.mjs"
+    "sb": "node scripts/supabase.mjs",
+    "check:env": "node scripts/check-env.mjs"
   },
   "dependencies": {
     "@1771technologies/lytenyte-core": "^2.0.3",
