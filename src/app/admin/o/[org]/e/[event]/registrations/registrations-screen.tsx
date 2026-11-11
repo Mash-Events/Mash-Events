@@ -54,10 +54,12 @@ export function RegistrationsScreen({
   eventId,
   eventName,
   canReview,
+  canExport,
 }: {
   eventId: string;
   eventName: string;
   canReview: boolean;
+  canExport?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -169,6 +171,37 @@ export function RegistrationsScreen({
             Search
           </button>
         </form>
+        {canExport ? (
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={async () => {
+              setBusy('export');
+              setError(null);
+              try {
+                const result = await eventApi<{
+                  url: string;
+                  count: number;
+                }>(eventId, '/exports/roster', {
+                  method: 'POST',
+                  body: { format: 'csv' },
+                });
+                window.open(result.url, '_blank', 'noopener');
+              } catch (e) {
+                setError(
+                  e instanceof AdminApiError
+                    ? e.message
+                    : 'The export failed. Try again.'
+                );
+              } finally {
+                setBusy(null);
+              }
+            }}
+            className="rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
+          >
+            {busy === 'export' ? 'Preparing…' : 'Export roster'}
+          </button>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap gap-2">

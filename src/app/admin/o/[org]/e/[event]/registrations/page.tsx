@@ -17,6 +17,7 @@ export default async function RegistrationsPage({
         eventId={event.id}
         eventName={event.name}
         canReview={permissions.includes('registrations.review')}
+        canExport={permissions.includes('exports.pii')}
       />
     </Suspense>
   );
