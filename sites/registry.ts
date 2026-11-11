@@ -26,6 +26,9 @@ const productionOrgs: readonly OrgEntry[] = [];
 export const DEMO_ORG_ID = '0d6b6f5e-4a1c-4c3e-9a2b-6d3c1e7f8a10';
 export const DEMO_EVENT_ID = '5f2c8e3a-7b4d-4e19-8c6a-2a9d4b7e1c35';
 export const DEMO_SUMMIT_EVENT_ID = '9f8e7d6c-5b4a-4c3d-9e2f-1a2b3c4d5e6f';
+/** Second local demo org: one platform, many orgs and event sites. */
+export const AURALIS_ORG_ID = '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+export const AURALIS_EVENT_ID = '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e';
 const devOrgs: readonly OrgEntry[] = [
   {
     id: DEMO_ORG_ID,
@@ -35,6 +38,12 @@ const devOrgs: readonly OrgEntry[] = [
       { id: DEMO_EVENT_ID, slug: 'launch-webinar' },
       { id: DEMO_SUMMIT_EVENT_ID, slug: 'orbit-summit' },
     ],
+  },
+  {
+    id: AURALIS_ORG_ID,
+    slug: 'auralis',
+    hosts: ['auralis.localhost'],
+    events: [{ id: AURALIS_EVENT_ID, slug: 'design-live' }],
   },
 ];
 

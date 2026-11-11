@@ -189,3 +189,116 @@ values
   ('6a7b8c9d-0e1f-4a2b-9c3d-0e1f2a3b6005', '0d6b6f5e-4a1c-4c3e-9a2b-6d3c1e7f8a10',
    '9f8e7d6c-5b4a-4c3d-9e2f-1a2b3c4d5e6f', 'Bengaluru Builders Community', 'Community', 'https://example.org/community', 5)
 on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Org 2: Auralis Studio — second demo client, a 90-minute online webinar
+-- (sites/auralis/design-live). Auto-confirmed registrations, so it exercises
+-- a different review mode and the instant join-link flow.
+-- ---------------------------------------------------------------------------
+
+insert into public.organizations (id, slug, name)
+values ('1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', 'auralis', 'Auralis Studio')
+on conflict (id) do nothing;
+
+insert into public.events (id, org_id, slug, name, short_name, kind, timezone,
+  status, starts_at, ends_at, registration_opens_at, registration_closes_at,
+  capacity, waitlist_enabled, review_mode, settings)
+values ('2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+  'design-live', 'Auralis Design Live — December Edition', 'Auralis Design Live',
+  'webinar', 'Asia/Kolkata', 'registration_open',
+  '2026-12-03 19:00:00+05:30', '2026-12-03 20:30:00+05:30',
+  now() - interval '1 day', '2026-12-03 12:00:00+05:30',
+  500, false, 'auto_confirm',
+  -- Demo: a wide join window so the emailed link is clickable any time.
+  '{"join_url":"https://example.org/live","join_window_minutes":44640}')
+on conflict (id) do nothing;
+
+insert into public.event_speakers (id, org_id, event_id, name, title, affiliation, bio, sort)
+values
+  ('3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f01', '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+   '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'Tara Bhatt', 'Creative Director', 'Auralis Studio',
+   'Tara has run design at Auralis for six years and still reviews type at 200% zoom.', 1),
+  ('3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f02', '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+   '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'Eshan Kapoor', 'Type Designer', 'Independent',
+   'Eshan draws display faces for Indian scripts and consults on interface type systems.', 2),
+  ('3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f03', '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+   '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'Lin Xu', 'Principal Product Designer', 'Sample Co',
+   'Lin led the trust redesign at Sample Co after a decade in fintech.', 3)
+on conflict (id) do nothing;
+
+insert into public.event_sessions (id, org_id, event_id, title, description,
+  starts_at, ends_at, track, room, sort)
+values
+  ('4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f01', '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+   '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'Welcome + what to expect',
+   'The format, the queue, and how live critique works.',
+   '2026-12-03 19:00:00+05:30', '2026-12-03 19:10:00+05:30', null, 'Online', 1),
+  ('4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f02', '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+   '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'Type systems for interfaces',
+   'Three real products, torn down and re-typeset live.',
+   '2026-12-03 19:10:00+05:30', '2026-12-03 19:40:00+05:30', null, 'Online', 2),
+  ('4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f03', '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+   '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'Designing for trust',
+   'What changes in a design when the product asks for money or data.',
+   '2026-12-03 19:40:00+05:30', '2026-12-03 20:10:00+05:30', null, 'Online', 3),
+  ('4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f04', '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+   '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e', 'Live critique + Q&A',
+   'Screens from the audience, honest feedback, and the answers that survive it.',
+   '2026-12-03 20:10:00+05:30', '2026-12-03 20:30:00+05:30', null, 'Online', 4)
+on conflict (id) do nothing;
+
+insert into public.event_session_speakers (org_id, event_id, session_id, speaker_id, sort)
+values
+  ('1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+   '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f01', '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f01', 1),
+  ('1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+   '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f02', '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f02', 1),
+  ('1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+   '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f03', '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f03', 1),
+  ('1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+   '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f04', '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f01', 1),
+  ('1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+   '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f04', '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f02', 2),
+  ('1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+   '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f04', '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6f03', 3)
+on conflict do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Local admin login (never applied to production): a super admin with a
+-- verified TOTP factor, so the admin console works after any db reset.
+--   email:    admin@example.org
+--   password: Mash-Local-Demo-2026!
+--   TOTP secret (add to any authenticator app):
+--             JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP
+-- ---------------------------------------------------------------------------
+
+insert into auth.users (instance_id, id, aud, role, email,
+  encrypted_password, email_confirmed_at, created_at, updated_at,
+  raw_app_meta_data, raw_user_meta_data,
+  -- GoTrue scans these as non-null strings; API signups store ''.
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone, phone_change, phone_change_token,
+  reauthentication_token)
+values ('00000000-0000-0000-0000-000000000000',
+  'c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f', 'authenticated', 'authenticated',
+  'admin@example.org', crypt('Mash-Local-Demo-2026!', gen_salt('bf')),
+  now(), now(), now(),
+  '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
+  '', '', '', '', '', '', '', '', '')
+on conflict (id) do nothing;
+
+do $$
+begin
+  if not exists (select 1 from public.memberships
+                 where scope = 'platform' and revoked_at is null) then
+    perform app.bootstrap_super_admin('c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f');
+  end if;
+end
+$$;
+
+insert into auth.mfa_factors (id, user_id, friendly_name, factor_type,
+  status, secret, created_at, updated_at)
+values ('d2e3f4a5-6b7c-4d8e-9f0a-1b2c3d4e5f60',
+  'c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f', 'Local demo authenticator', 'totp',
+  'verified', 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP', now(), now())
+on conflict (id) do nothing;
