@@ -1,38 +1,44 @@
+import { Inter } from 'next/font/google';
+import Image from 'next/image';
 import type {
   EventContent,
   FormQuestion,
-  PublicSession,
   PublicSpeaker,
   SiteModule,
   SitePageProps,
 } from '@core/site/types';
 import { formatDate, formatTime, timeZoneLabel } from '@core/ui/site/format';
 import { RegistrationForm } from '@core/ui/site/registration-form';
-import { SiteFooter } from '@core/ui/site/sections';
-import type { LucideIcon } from 'lucide-react';
-import {
-  ArrowRight,
-  CalendarDays,
-  Globe2,
-  GraduationCap,
-  MapPin,
-  MessageSquare,
-  Sparkles,
-  Users,
-  Zap,
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 // Fake client event for local development, seeded by supabase/demo.sql and
 // never served in production. A real event copies this folder, writes its own
 // markup and copy, and adds its registry entry (see sites/README.md).
 //
-// Everything here is server-rendered; the registration form is the only
-// interactive island, so the page ships almost no JavaScript
-// (docs/system-design.md §10.2).
+// Design language: Web Summit (websummit.com) — white editorial canvas,
+// black type in Inter at large scale, signature pink accent, photography-led
+// bands and stats. Everything is server-rendered; the registration form is the
+// only interactive island (docs/system-design.md §10.2).
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-ws',
+});
 
 const TAGLINE =
   'A one-day, two-track gathering on building software that survives contact with the real world — in person in Bengaluru and live online.';
+
+// Demo photography from Unsplash (real events use Supabase Storage).
+const PHOTOS = {
+  hero: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=2400&auto=format&fit=crop',
+  why: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?q=80&w=2400&auto=format&fit=crop',
+  agenda:
+    'https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=2400&auto=format&fit=crop',
+  speakers:
+    'https://images.unsplash.com/photo-1591115765373-5207764f72e7?q=80&w=2400&auto=format&fit=crop',
+};
 
 const questions: FormQuestion[] = [
   {
@@ -56,30 +62,43 @@ const questions: FormQuestion[] = [
   },
 ];
 
-const HIGHLIGHTS: {
-  icon: LucideIcon;
-  title: string;
-  body: string;
-}[] = [
+const HIGHLIGHTS = [
   {
-    icon: Zap,
     title: 'Two tracks, zero fluff',
     body: 'Build for craft and design; Scale for data, infrastructure and running things in production.',
   },
   {
-    icon: MessageSquare,
-    title: 'Real Q&A, not panels read off cards',
+    title: 'Real Q&A, not read-off-card panels',
     body: 'Every session leaves at least fifteen minutes for questions from the room and the stream.',
   },
   {
-    icon: GraduationCap,
     title: 'Closing demo night',
     body: 'Five-minute live demos from the community, judged by the speakers, prizes included.',
   },
   {
-    icon: Globe2,
     title: 'Hybrid by design',
     body: 'The Grand Hall in Bengaluru, plus a live stream with its own moderators. One event, two rooms.',
+  },
+];
+
+const QUOTES = [
+  {
+    quote:
+      'The hallway track alone was worth the day — I shipped two fixes before the closing keynote.',
+    name: 'Devika Raman',
+    role: 'Staff Engineer, Example Cloud',
+  },
+  {
+    quote:
+      'Finally a conference where the speakers run systems, not slideware.',
+    name: 'Nikhil Varma',
+    role: 'CTO, Sample Co',
+  },
+  {
+    quote:
+      'My team came back with a shared vocabulary and an actual to-do list.',
+    name: 'Ananya Pillai',
+    role: 'Engineering Manager, Northwind Labs',
   },
 ];
 
@@ -102,32 +121,37 @@ const FAQS = [
   },
 ];
 
+function Shell({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className={inter.variable}
+      style={{ fontFamily: 'var(--font-ws), Inter, system-ui, sans-serif' }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function Nav({ basePath }: { basePath: string }) {
   return (
-    <nav className="sticky top-0 z-10 border-b border-white/10 bg-stone-950/90 text-white backdrop-blur">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3">
+    <nav className="sticky top-0 z-20 border-b border-black/10 bg-white/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
         <a
           href={basePath}
-          className="font-semibold tracking-tight hover:text-amber-300"
+          className="text-lg font-extrabold tracking-tight text-black"
         >
-          Orbit Summit <span className="text-amber-400">2026</span>
+          Orbit Summit <span className="text-[#cb1977]">2026</span>
         </a>
-        <div className="flex flex-wrap items-center gap-5 text-sm">
-          <a
-            href={`${basePath}/agenda`}
-            className="text-white/75 hover:text-white"
-          >
+        <div className="flex items-center gap-6 text-sm font-medium text-black">
+          <a className="hover:text-[#cb1977]" href={`${basePath}/agenda`}>
             Agenda
           </a>
-          <a
-            href={`${basePath}/speakers`}
-            className="text-white/75 hover:text-white"
-          >
+          <a className="hover:text-[#cb1977]" href={`${basePath}/speakers`}>
             Speakers
           </a>
           <a
             href={`${basePath}#register`}
-            className="rounded-md bg-amber-400 px-4 py-2 font-semibold text-stone-950 hover:bg-amber-300"
+            className="rounded-full bg-black px-5 py-2.5 font-semibold text-white hover:bg-[#cb1977]"
           >
             Register free
           </a>
@@ -137,100 +161,138 @@ function Nav({ basePath }: { basePath: string }) {
   );
 }
 
-function Fact({
-  icon,
-  label,
+function Eyebrow({
   children,
+  light,
 }: {
-  icon: ReactNode;
-  label: string;
   children: ReactNode;
+  light?: boolean;
 }) {
   return (
-    <div>
-      <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-amber-300">
-        {icon}
-        {label}
-      </dt>
-      <dd className="mt-2 text-sm leading-relaxed text-white/85">{children}</dd>
+    <p
+      className={`text-xs font-bold uppercase tracking-[0.2em] ${
+        light ? 'text-white/50' : 'text-black/50'
+      }`}
+    >
+      {children}
+    </p>
+  );
+}
+
+function initials(name: string): string {
+  return name
+    .replace(/^Dr\.\s+/, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+function More({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex items-center gap-1 text-sm font-bold text-[#cb1977] hover:text-black"
+    >
+      {label}
+      <ArrowRight size={16} aria-hidden />
+    </a>
+  );
+}
+
+function PhotoBand({ content }: { content: EventContent }) {
+  const { speakers, sessions } = content;
+  const tracks = new Set(
+    sessions.map((s) => s.track).filter((t): t is string => Boolean(t))
+  ).size;
+  const stats = [
+    { value: String(speakers.length), label: 'Speakers' },
+    { value: String(sessions.length), label: 'Sessions' },
+    { value: String(tracks || 1), label: 'Tracks' },
+    { value: '300', label: 'Seats' },
+  ];
+  return (
+    <div className="relative h-[440px] w-full sm:h-[500px]">
+      <Image
+        src={PHOTOS.hero}
+        alt="Attendees at a technology conference"
+        fill
+        priority
+        className="object-cover"
+        sizes="100vw"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40" />
+      <div className="absolute inset-x-0 bottom-0">
+        <div className="mx-auto max-w-6xl px-6 pb-10">
+          <h2 className="max-w-3xl text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
+            Why will 300 builders gather in Bengaluru?
+          </h2>
+          <dl className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="border-l-2 border-[#cb1977] pl-4"
+              >
+                <dt className="text-xs font-semibold uppercase tracking-widest text-white/60">
+                  {stat.label}
+                </dt>
+                <dd className="text-3xl font-extrabold tabular-nums text-white sm:text-4xl">
+                  {stat.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
     </div>
   );
 }
 
 function Hero({ content, basePath }: SitePageProps) {
   const { event } = content;
+  const when = event.starts_at
+    ? `${formatDate(event.starts_at, event.timezone)} · ${formatTime(
+        event.starts_at,
+        event.timezone
+      )}–${formatTime(event.ends_at, event.timezone)} ${timeZoneLabel(
+        event.timezone,
+        event.starts_at
+      )}`
+    : 'Dates to be announced';
   return (
-    <header className="bg-stone-950 text-white">
-      <div className="relative overflow-hidden">
-        {/* Decorative orbit rings; pure CSS, no images, no JS. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full border border-white/10"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-10 top-16 h-64 w-64 rounded-full border border-amber-400/20"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute right-24 top-40 h-3 w-3 rounded-full bg-amber-400"
-        />
-        <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-14 sm:pb-24 sm:pt-20">
-          <p className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-300">
-            <Sparkles size={14} aria-hidden />
-            {event.org.name} presents
-          </p>
-          <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-tight sm:text-6xl">
-            {event.name}
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/75">
-            {TAGLINE}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            {event.registration_open ? (
-              <a
-                href={`${basePath}#register`}
-                className="rounded-md bg-amber-400 px-6 py-3 text-sm font-semibold text-stone-950 hover:bg-amber-300"
-              >
-                Register free
-              </a>
-            ) : null}
+    <header className="bg-white text-black">
+      <div className="mx-auto max-w-6xl px-6 pb-12 pt-16 sm:pt-24">
+        <Eyebrow>{event.org.name} · Grand Hall, Bengaluru</Eyebrow>
+        <h1 className="mt-6 max-w-4xl text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-7xl">
+          {event.name}
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-black/70">
+          {TAGLINE}
+        </p>
+        <p className="mt-4 text-sm font-medium text-black/50">
+          “The most useful day of the year for builders.” — The Bengaluru
+          Builder Report
+        </p>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          {event.registration_open ? (
             <a
-              href={`${basePath}/agenda`}
-              className="rounded-md border border-white/25 px-6 py-3 text-sm font-semibold text-white hover:border-white/50"
+              href={`${basePath}#register`}
+              className="rounded-full bg-black px-7 py-3.5 text-sm font-semibold text-white hover:bg-[#cb1977]"
             >
-              View the agenda
+              Register free
             </a>
-          </div>
-          <dl className="mt-14 grid gap-8 border-t border-white/10 pt-8 sm:grid-cols-3">
-            <Fact icon={<CalendarDays size={18} aria-hidden />} label="When">
-              {event.starts_at
-                ? `${formatDate(event.starts_at, event.timezone)} · ${formatTime(
-                    event.starts_at,
-                    event.timezone
-                  )}–${formatTime(event.ends_at, event.timezone)}`
-                : 'Date to be announced'}
-              <span className="mt-1 block text-xs text-white/50">
-                {event.starts_at
-                  ? timeZoneLabel(event.timezone, event.starts_at)
-                  : ''}
-              </span>
-            </Fact>
-            <Fact icon={<MapPin size={18} aria-hidden />} label="Where">
-              Grand Hall, Bengaluru · live online
-              <span className="mt-1 block text-xs text-white/50">
-                Hybrid event
-              </span>
-            </Fact>
-            <Fact icon={<Users size={18} aria-hidden />} label="Admission">
-              Free · 300 seats · registrations reviewed
-              <span className="mt-1 block text-xs text-white/50">
-                Waitlist opens after
-              </span>
-            </Fact>
-          </dl>
+          ) : null}
+          <a
+            href={`${basePath}/agenda`}
+            className="rounded-full border border-black px-7 py-3.5 text-sm font-semibold text-black hover:border-[#cb1977] hover:text-[#cb1977]"
+          >
+            View the agenda
+          </a>
+          <span className="text-sm text-black/40">{when}</span>
         </div>
       </div>
+      <PhotoBand content={content} />
     </header>
   );
 }
@@ -249,61 +311,38 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="mx-auto max-w-6xl px-6 py-14">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          {kicker ? (
-            <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">
-              {kicker}
-            </p>
-          ) : null}
-          <h2 className="mt-1 text-2xl font-semibold text-stone-900 sm:text-3xl">
-            {title}
-          </h2>
+    <section id={id} className="bg-white text-black">
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-black pb-6">
+          <div>
+            {kicker ? <Eyebrow>{kicker}</Eyebrow> : null}
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
+              {title}
+            </h2>
+          </div>
+          {action}
         </div>
-        {action}
+        <div className="mt-10">{children}</div>
       </div>
-      <div className="mt-8">{children}</div>
     </section>
   );
 }
 
-function More({ href, label }: { href: string; label: string }) {
+function SpeakerTile({ speaker }: { speaker: PublicSpeaker }) {
+  const role = [speaker.title, speaker.affiliation].filter(Boolean).join(' · ');
   return (
-    <a
-      href={href}
-      className="inline-flex items-center gap-1 text-sm font-semibold text-amber-700 hover:text-amber-800"
-    >
-      {label}
-      <ArrowRight size={16} aria-hidden />
-    </a>
-  );
-}
-
-function initials(name: string): string {
-  return name
-    .replace(/^Dr\.\s+/, '')
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
-function SpeakerCard({ speaker }: { speaker: PublicSpeaker }) {
-  return (
-    <li className="rounded-xl border border-stone-200 bg-white p-5">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-stone-900 text-sm font-semibold text-amber-300">
+    <li className="group bg-black p-6 transition-colors hover:bg-[#cb1977]">
+      <p className="text-4xl font-extrabold tracking-tight text-white/25 group-hover:text-white/40">
         {initials(speaker.name)}
-      </div>
-      <p className="mt-4 font-semibold text-stone-900">{speaker.name}</p>
-      {speaker.title || speaker.affiliation ? (
-        <p className="mt-1 text-sm text-amber-700">
-          {[speaker.title, speaker.affiliation].filter(Boolean).join(' · ')}
+      </p>
+      <p className="mt-8 font-bold text-white">{speaker.name}</p>
+      {role ? (
+        <p className="text-sm text-white/60 group-hover:text-white/80">
+          {role}
         </p>
       ) : null}
       {speaker.bio ? (
-        <p className="mt-3 text-sm leading-relaxed text-stone-600">
+        <p className="mt-3 hidden text-sm leading-relaxed text-white/70 lg:block">
           {speaker.bio}
         </p>
       ) : null}
@@ -311,103 +350,113 @@ function SpeakerCard({ speaker }: { speaker: PublicSpeaker }) {
   );
 }
 
-function TrackBadge({ track }: { track: string | null }) {
-  const style =
+function TrackChip({ track }: { track: string | null }) {
+  const [label, cls] =
     track === 'Build'
-      ? 'bg-amber-100 text-amber-900'
+      ? ['Build', 'bg-[#cb1977] text-white']
       : track === 'Scale'
-        ? 'bg-sky-100 text-sky-900'
-        : 'bg-stone-200 text-stone-700';
+        ? ['Scale', 'bg-white text-black border border-black']
+        : track
+          ? [track, 'bg-black text-white']
+          : ['Break', 'bg-black/5 text-black/60'];
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${style}`}>
-      {track ?? 'Session'}
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${cls}`}
+    >
+      {label}
     </span>
   );
-}
-
-function SessionCard({
-  session,
-  speakers,
-}: {
-  session: PublicSession;
-  speakers: Map<string, PublicSpeaker>;
-}) {
-  const names = session.speaker_ids
-    .map((id) => speakers.get(id)?.name)
-    .filter(Boolean)
-    .join(', ');
-  return (
-    <li className="h-full rounded-xl border border-stone-200 bg-white p-5">
-      <div className="flex flex-wrap items-center gap-2">
-        <TrackBadge track={session.track} />
-        {session.room ? (
-          <span className="text-xs text-stone-500">{session.room}</span>
-        ) : null}
-      </div>
-      <p className="mt-3 font-semibold text-stone-900">{session.title}</p>
-      {session.description ? (
-        <p className="mt-1 text-sm leading-relaxed text-stone-600">
-          {session.description}
-        </p>
-      ) : null}
-      {names ? (
-        <p className="mt-3 text-sm font-medium text-amber-700">{names}</p>
-      ) : null}
-    </li>
-  );
-}
-
-/** Consecutive sessions with the same start and end time share a row. */
-function slots(sessions: PublicSession[]) {
-  const grouped: { key: string; sessions: PublicSession[] }[] = [];
-  for (const session of sessions) {
-    const key = `${session.starts_at ?? ''}/${session.ends_at ?? ''}`;
-    const last = grouped[grouped.length - 1];
-    if (last && last.key === key) last.sessions.push(session);
-    else grouped.push({ key, sessions: [session] });
-  }
-  return grouped;
 }
 
 function Agenda({ content, limit }: { content: EventContent; limit?: number }) {
   const map = new Map(content.speakers.map((s) => [s.id, s]));
   const shown = limit ? content.sessions.slice(0, limit) : content.sessions;
   return (
-    <ol className="space-y-6">
-      {slots(shown).map((slot) => {
-        const first = slot.sessions[0];
+    <ol className="border-t-2 border-black">
+      {shown.map((session) => {
+        const names = session.speaker_ids
+          .map((id) => map.get(id)?.name)
+          .filter(Boolean)
+          .join(', ');
         return (
           <li
-            key={slot.key}
-            className="grid gap-3 sm:grid-cols-[9rem_1fr] sm:gap-6"
+            key={session.id}
+            className="grid gap-3 border-b border-black/10 py-6 sm:grid-cols-[10rem_1fr] sm:gap-8"
           >
-            <div className="sm:text-right">
-              <p className="text-sm font-semibold text-stone-900">
-                {first.starts_at
-                  ? formatTime(first.starts_at, content.event.timezone)
-                  : 'TBA'}
+            <p className="text-sm font-extrabold tabular-nums text-black">
+              {session.starts_at
+                ? formatTime(session.starts_at, content.event.timezone)
+                : 'TBA'}
+              {session.ends_at ? (
+                <span className="block font-medium text-black/40">
+                  {formatTime(session.ends_at, content.event.timezone)}
+                </span>
+              ) : null}
+            </p>
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <TrackChip track={session.track} />
+                {session.room ? (
+                  <span className="text-xs font-semibold uppercase tracking-widest text-black/40">
+                    {session.room}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-3 text-xl font-bold tracking-tight text-black">
+                {session.title}
               </p>
-              <p className="text-xs text-stone-500">
-                {first.ends_at
-                  ? `until ${formatTime(first.ends_at, content.event.timezone)}`
-                  : ''}
-              </p>
+              {session.description ? (
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-black/60">
+                  {session.description}
+                </p>
+              ) : null}
+              {names ? (
+                <p className="mt-2 text-sm font-semibold text-[#cb1977]">
+                  {names}
+                </p>
+              ) : null}
             </div>
-            <ul
-              className={`grid gap-3 ${slot.sessions.length > 1 ? 'md:grid-cols-2' : ''}`}
-            >
-              {slot.sessions.map((session) => (
-                <SessionCard
-                  key={session.id}
-                  session={session}
-                  speakers={map}
-                />
-              ))}
-            </ul>
           </li>
         );
       })}
     </ol>
+  );
+}
+
+function Why({ content }: { content: EventContent }) {
+  return (
+    <section className="bg-white text-black">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-2">
+        <div className="relative h-72 w-full sm:h-96">
+          <Image
+            src={PHOTOS.why}
+            alt="A workshop session at a technology conference"
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 50vw, 100vw"
+          />
+        </div>
+        <div>
+          <Eyebrow>Why come</Eyebrow>
+          <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            A day built for builders
+          </h2>
+          <ul className="mt-8 space-y-5">
+            {HIGHLIGHTS.map((item) => (
+              <li key={item.title} className="flex gap-4">
+                <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#cb1977]" />
+                <div>
+                  <p className="font-bold text-black">{item.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-black/60">
+                    {item.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -424,104 +473,117 @@ function Sponsors({ content }: { content: EventContent }) {
     },
   ].filter((group) => group.list.length);
   return (
-    <div className="space-y-8">
-      {groups.map((group) => (
-        <div key={group.tier}>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-500">
-            {group.tier}
-          </h3>
-          <ul className="mt-3 flex flex-wrap gap-4">
-            {group.list.map((sponsor) => (
-              <li key={sponsor.id}>
-                {sponsor.url ? (
-                  <a
-                    href={sponsor.url}
-                    rel="noopener noreferrer sponsored"
-                    target="_blank"
-                    className="block rounded-lg border border-stone-200 px-5 py-3 text-sm font-semibold text-stone-800 hover:border-amber-400 hover:text-amber-800"
-                  >
-                    {sponsor.name}
-                  </a>
-                ) : (
-                  <span className="block rounded-lg border border-stone-200 px-5 py-3 text-sm font-semibold text-stone-800">
-                    {sponsor.name}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
+    <section className="bg-white text-black">
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <Eyebrow>Partners</Eyebrow>
+        <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
+          Backed by
+        </h2>
+        <div className="mt-10 space-y-10">
+          {groups.map((group) => (
+            <div key={group.tier}>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-black/40">
+                {group.tier}
+              </p>
+              <ul className="mt-4 flex flex-wrap gap-3">
+                {group.list.map((sponsor) => (
+                  <li key={sponsor.id}>
+                    {sponsor.url ? (
+                      <a
+                        href={sponsor.url}
+                        rel="noopener noreferrer sponsored"
+                        target="_blank"
+                        className="inline-block rounded-full border border-black/15 px-6 py-3 text-sm font-bold text-black hover:border-[#cb1977] hover:text-[#cb1977]"
+                      >
+                        {sponsor.name}
+                      </a>
+                    ) : (
+                      <span className="inline-block rounded-full border border-black/15 px-6 py-3 text-sm font-bold text-black">
+                        {sponsor.name}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </div>
+    </section>
   );
 }
 
-function FaqSection() {
+function Quotes() {
   return (
-    <Section kicker="FAQ" title="Good to know">
-      <div className="max-w-3xl space-y-3">
-        {FAQS.map((item) => (
-          <details
-            key={item.q}
-            className="rounded-xl border border-stone-200 bg-white p-5 [&_summary::-webkit-details-marker]:hidden"
-          >
-            <summary className="cursor-pointer font-semibold text-stone-900">
-              {item.q}
-            </summary>
-            <p className="mt-3 text-sm leading-relaxed text-stone-600">
-              {item.a}
-            </p>
-          </details>
-        ))}
+    <section className="bg-black text-white">
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <Eyebrow light>What attendees say</Eyebrow>
+        <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
+          Word of mouth
+        </h2>
+        <ul className="mt-10 grid gap-10 md:grid-cols-3">
+          {QUOTES.map((quote) => (
+            <li key={quote.name} className="border-l-2 border-[#cb1977] pl-5">
+              <p className="text-lg font-semibold leading-snug text-white">
+                “{quote.quote}”
+              </p>
+              <p className="mt-4 text-sm font-bold text-white">{quote.name}</p>
+              <p className="text-sm text-white/50">{quote.role}</p>
+            </li>
+          ))}
+        </ul>
       </div>
-    </Section>
+    </section>
   );
 }
 
 function Register({ content, basePath }: SitePageProps) {
   const { event } = content;
   const closes = event.registration_closes_at
-    ? `Registration closes ${formatDate(event.registration_closes_at, event.timezone)}.`
+    ? `Registration closes ${formatDate(
+        event.registration_closes_at,
+        event.timezone
+      )}.`
     : '';
   return (
-    <section id="register" className="bg-stone-950 text-white">
-      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1fr_1.1fr]">
+    <section id="register" className="bg-white text-black">
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-amber-300">
-            Register
-          </p>
-          <h2 className="mt-2 text-3xl font-semibold">Save your seat</h2>
-          <p className="mt-4 leading-relaxed text-white/75">
+          <Eyebrow>Register</Eyebrow>
+          <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
+            Save your seat
+          </h2>
+          <p className="mt-6 max-w-md leading-relaxed text-black/70">
             Seats are limited and every registration is reviewed by a person —
             this is not first-come-first-served. Here is what happens after you
             submit:
           </p>
-          <ol className="mt-6 space-y-3 text-sm text-white/80">
-            <li className="flex gap-3">
-              <span className="font-semibold text-amber-300">1.</span>
-              You get an acknowledgement email within minutes.
-            </li>
-            <li className="flex gap-3">
-              <span className="font-semibold text-amber-300">2.</span>
-              The team reviews your registration (usually within a day).
-            </li>
-            <li className="flex gap-3">
-              <span className="font-semibold text-amber-300">3.</span>
-              On confirmation you receive your personal join link by email.
-            </li>
+          <ol className="mt-8 space-y-4">
+            {[
+              'Acknowledgement email within minutes.',
+              'Reviewed by the team, usually within a day.',
+              'Personal join link on confirmation.',
+            ].map((step, index) => (
+              <li key={step} className="flex gap-4">
+                <span className="text-2xl font-extrabold text-[#cb1977]">
+                  0{index + 1}
+                </span>
+                <span className="pt-1 text-sm text-black/70">{step}</span>
+              </li>
+            ))}
           </ol>
-          <p className="mt-6 text-xs text-white/50">
-            {closes} Free admission. Contact the team at{' '}
+          <p className="mt-8 text-sm text-black/50">
+            {closes} Free admission — seats are confirmed by review, not by
+            speed. Questions?{' '}
             <a
               href="mailto:hello@example.org"
-              className="underline hover:text-white/70"
+              className="font-semibold text-[#cb1977] hover:text-black"
             >
               hello@example.org
             </a>
-            .
           </p>
         </div>
-        <div className="rounded-xl bg-white p-6 text-stone-900 sm:p-8">
+        <div className="rounded-3xl border border-black/10 bg-white p-6 shadow-[0_25px_60px_-30px_rgba(0,0,0,0.35)] sm:p-8">
           <RegistrationForm
             basePath={basePath}
             open={event.registration_open}
@@ -534,14 +596,106 @@ function Register({ content, basePath }: SitePageProps) {
   );
 }
 
-function PageHeader({ title, lead }: { title: string; lead?: string }) {
+function Faq() {
   return (
-    <header className="bg-stone-950 text-white">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <h1 className="text-3xl font-bold sm:text-4xl">{title}</h1>
-        {lead ? (
-          <p className="mt-3 max-w-2xl leading-relaxed text-white/70">{lead}</p>
-        ) : null}
+    <section className="bg-white text-black">
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <Eyebrow>FAQ</Eyebrow>
+        <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
+          Good to know
+        </h2>
+        <div className="mt-10 max-w-3xl">
+          {FAQS.map((item) => (
+            <details
+              key={item.q}
+              className="group border-b border-black/10 py-5 [&_summary::-webkit-details-marker]:hidden"
+            >
+              <summary className="flex cursor-pointer items-center justify-between gap-4 font-bold text-black">
+                {item.q}
+                <span className="text-2xl leading-none text-[#cb1977] transition-transform group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-black/60">
+                {item.a}
+              </p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer({ content, basePath }: SitePageProps) {
+  const { event } = content;
+  return (
+    <footer className="bg-black text-white">
+      <div className="mx-auto max-w-6xl px-6 py-14">
+        <p className="text-4xl font-extrabold tracking-tight sm:text-6xl">
+          {event.short_name ?? event.name}
+        </p>
+        <div className="mt-10 flex flex-wrap gap-x-10 gap-y-3 text-sm font-semibold">
+          <a
+            className="text-white/70 hover:text-[#cb1977]"
+            href={`${basePath}/agenda`}
+          >
+            Agenda
+          </a>
+          <a
+            className="text-white/70 hover:text-[#cb1977]"
+            href={`${basePath}/speakers`}
+          >
+            Speakers
+          </a>
+          <a
+            className="text-white/70 hover:text-[#cb1977]"
+            href={`${basePath}#register`}
+          >
+            Register
+          </a>
+          <a
+            className="text-white/70 hover:text-[#cb1977]"
+            href="mailto:hello@example.org"
+          >
+            hello@example.org
+          </a>
+        </div>
+        <p className="mt-10 border-t border-white/10 pt-6 text-xs text-white/40">
+          {event.name} · organised by {event.org.name} · a demo event for the
+          Mash Events engine
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+function PageHeader({
+  title,
+  lead,
+  photo,
+}: {
+  title: string;
+  lead: string;
+  photo: string;
+}) {
+  return (
+    <header className="bg-black text-white">
+      <div className="relative h-56 sm:h-72">
+        <Image
+          src={photo}
+          alt="Attendees at a technology conference"
+          fill
+          className="object-cover opacity-60"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
+      </div>
+      <div className="mx-auto max-w-6xl px-6 pb-12 pt-8">
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">
+          {title}
+        </h1>
+        <p className="mt-4 max-w-2xl leading-relaxed text-white/70">{lead}</p>
       </div>
     </header>
   );
@@ -549,95 +703,84 @@ function PageHeader({ title, lead }: { title: string; lead?: string }) {
 
 function Home({ content, basePath }: SitePageProps) {
   return (
-    <main>
-      <Nav basePath={basePath} />
-      <Hero content={content} basePath={basePath} />
-      <Section kicker="Why come" title="A day built for builders">
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {HIGHLIGHTS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li
-                key={item.title}
-                className="rounded-xl border border-stone-200 bg-white p-5"
-              >
-                <Icon size={20} className="text-amber-600" aria-hidden />
-                <p className="mt-3 font-semibold text-stone-900">
-                  {item.title}
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                  {item.body}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
-      </Section>
-      <Section
-        kicker="Speakers"
-        title="People worth listening to"
-        action={<More href={`${basePath}/speakers`} label="All speakers" />}
-      >
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {content.speakers.slice(0, 4).map((speaker) => (
-            <SpeakerCard key={speaker.id} speaker={speaker} />
-          ))}
-        </ul>
-      </Section>
-      <Section
-        kicker="Agenda"
-        title="The day at a glance"
-        action={<More href={`${basePath}/agenda`} label="Full agenda" />}
-      >
-        <Agenda content={content} limit={5} />
-      </Section>
-      {content.sponsors.length ? (
-        <Section kicker="Partners" title="Backed by">
-          <Sponsors content={content} />
+    <Shell>
+      <main>
+        <Nav basePath={basePath} />
+        <Hero content={content} basePath={basePath} />
+        <Section
+          kicker="On the stages"
+          title="Meet the speakers"
+          action={<More href={`${basePath}/speakers`} label="All speakers" />}
+        >
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {content.speakers.slice(0, 4).map((speaker) => (
+              <SpeakerTile key={speaker.id} speaker={speaker} />
+            ))}
+          </ul>
         </Section>
-      ) : null}
-      <Register content={content} basePath={basePath} />
-      <FaqSection />
-      <SiteFooter content={content} />
-    </main>
+        <Why content={content} />
+        <Section
+          kicker="Schedule"
+          title="The day at a glance"
+          action={<More href={`${basePath}/agenda`} label="Full agenda" />}
+        >
+          <Agenda content={content} limit={4} />
+        </Section>
+        {content.sponsors.length ? <Sponsors content={content} /> : null}
+        <Quotes />
+        <Register content={content} basePath={basePath} />
+        <Faq />
+        <Footer content={content} basePath={basePath} />
+      </main>
+    </Shell>
   );
 }
 
 function AgendaPage({ content, basePath }: SitePageProps) {
   return (
-    <main>
-      <Nav basePath={basePath} />
-      <PageHeader
-        title="Agenda"
-        lead="Two tracks — Build and Scale — around a shared main stage. Track talks are in person only; everything on the main stage streams live. All times India Standard Time."
-      />
-      <div className="mx-auto max-w-6xl px-6 py-14">
-        <Agenda content={content} />
-      </div>
-      <Register content={content} basePath={basePath} />
-      <SiteFooter content={content} />
-    </main>
+    <Shell>
+      <main>
+        <Nav basePath={basePath} />
+        <PageHeader
+          title="Agenda"
+          lead="Two tracks — Build and Scale — around a shared main stage. Track talks are in person only; everything on the main stage streams live. All times India Standard Time."
+          photo={PHOTOS.agenda}
+        />
+        <section className="bg-white text-black">
+          <div className="mx-auto max-w-6xl px-6 py-14">
+            <Agenda content={content} />
+          </div>
+        </section>
+        <Register content={content} basePath={basePath} />
+        <Footer content={content} basePath={basePath} />
+      </main>
+    </Shell>
   );
 }
 
 function SpeakersPage({ content, basePath }: SitePageProps) {
   return (
-    <main>
-      <Nav basePath={basePath} />
-      <PageHeader
-        title="Speakers"
-        lead="Eight practitioners from product, engineering, design and research — all speaking from scar tissue, not slides."
-      />
-      <div className="mx-auto max-w-6xl px-6 py-14">
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {content.speakers.map((speaker) => (
-            <SpeakerCard key={speaker.id} speaker={speaker} />
-          ))}
-        </ul>
-      </div>
-      <Register content={content} basePath={basePath} />
-      <SiteFooter content={content} />
-    </main>
+    <Shell>
+      <main>
+        <Nav basePath={basePath} />
+        <PageHeader
+          title="Speakers"
+          lead="Eight practitioners from product, engineering, design and research — all speaking from scar tissue, not slides."
+          photo={PHOTOS.speakers}
+        />
+        <section className="bg-white text-black">
+          <div className="mx-auto max-w-6xl px-6 py-14">
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {content.speakers.map((speaker) => (
+                <SpeakerTile key={speaker.id} speaker={speaker} />
+              ))}
+            </ul>
+          </div>
+        </section>
+        <Register content={content} basePath={basePath} />
+        <Footer content={content} basePath={basePath} />
+      </main>
+    </Shell>
   );
 }
 

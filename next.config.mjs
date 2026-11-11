@@ -16,7 +16,9 @@ const contentSecurityPolicy = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
-  "img-src 'self' data: blob: https://*.supabase.co",
+  // images.unsplash.com: demo-event photography only (real events serve their
+  // own assets from Supabase Storage, design §10.3).
+  "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com",
   `connect-src 'self' https://*.supabase.co ${sentryCspOrigins.join(' ')}`,
   'frame-src https://challenges.cloudflare.com',
   "object-src 'none'",
@@ -51,7 +53,10 @@ const nextConfig = {
   allowedDevOrigins: ['127.0.0.1', 'localhost', '*.localhost'],
   images: {
     formats: ['image/avif', 'image/webp'],
-    remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+    ],
   },
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
