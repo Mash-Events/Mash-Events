@@ -33,7 +33,9 @@ const devOrgs: readonly OrgEntry[] = [
   {
     id: DEMO_ORG_ID,
     slug: 'demo',
-    hosts: ['demo.localhost'],
+    // The Tailscale IP lets registration demos run over Tailscale without a
+    // client hosts entry (dev only; never in productionOrgs).
+    hosts: ['demo.localhost', '100.127.185.59'],
     events: [
       { id: DEMO_EVENT_ID, slug: 'launch-webinar' },
       { id: DEMO_SUMMIT_EVENT_ID, slug: 'orbit-summit' },
