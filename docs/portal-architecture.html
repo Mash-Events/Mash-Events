@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mash Events — How the Portal Works</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #020617;
+      min-height: 100vh;
+      padding: 2rem;
+      color: white;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; }
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 1rem;
+      border: 1px solid #1e293b;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    svg { width: 100%; min-width: 900px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .card { background: rgba(15, 23, 42, 0.5); border-radius: 0.75rem; border: 1px solid #1e293b; padding: 1.25rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.rose { background: #fb7185; }
+    .card-dot.violet { background: #a78bfa; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Mash Events — How the Portal Works</h1>
+      </div>
+      <p class="subtitle">one Next.js deploy · many event websites · one admin console</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1000 810">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <marker id="arrowviolet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa" />
+          </marker>
+          <marker id="arrowrose" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#fb7185" />
+          </marker>
+          <marker id="arrowamber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#fbbf24" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- ================= ACTORS ================= -->
+        <rect x="30" y="70" width="110" height="50" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="85" y="90" fill="white" font-size="11" font-weight="600" text-anchor="middle">Attendees</text>
+        <text x="85" y="106" fill="#94a3b8" font-size="8" text-anchor="middle">browser · no login</text>
+
+        <rect x="30" y="150" width="110" height="50" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="85" y="170" fill="white" font-size="11" font-weight="600" text-anchor="middle">Event staff</text>
+        <text x="85" y="186" fill="#94a3b8" font-size="8" text-anchor="middle">invite-only</text>
+
+        <!-- ================= CLOUDFLARE ================= -->
+        <rect x="170" y="55" width="155" height="165" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="180" y="73" fill="#fbbf24" font-size="9" font-weight="600">Cloudflare</text>
+
+        <rect x="185" y="82" width="125" height="45" rx="6" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="247" y="101" fill="white" font-size="11" font-weight="600" text-anchor="middle">DNS</text>
+        <text x="247" y="115" fill="#94a3b8" font-size="8" text-anchor="middle">grey-cloud CNAMEs</text>
+
+        <rect x="185" y="140" width="125" height="50" rx="6" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="247" y="160" fill="white" font-size="11" font-weight="600" text-anchor="middle">Turnstile</text>
+        <text x="247" y="174" fill="#94a3b8" font-size="8" text-anchor="middle">CAPTCHA on forms</text>
+
+        <!-- ================= VERCEL ================= -->
+        <rect x="355" y="40" width="610" height="440" rx="12" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="367" y="58" fill="#fbbf24" font-size="10" font-weight="600">Vercel · bom1 — one Next.js 16 deploy</text>
+
+        <rect x="380" y="78" width="170" height="55" rx="6" fill="#0f172a"/>
+        <rect x="380" y="78" width="170" height="55" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="465" y="98" fill="white" font-size="11" font-weight="600" text-anchor="middle">proxy.ts</text>
+        <text x="465" y="112" fill="#94a3b8" font-size="8" text-anchor="middle">host → org → event</text>
+
+        <rect x="575" y="78" width="150" height="55" rx="6" fill="#0f172a"/>
+        <rect x="575" y="78" width="150" height="55" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="650" y="98" fill="white" font-size="10" font-weight="600" text-anchor="middle">sites/registry.ts</text>
+        <text x="650" y="112" fill="#94a3b8" font-size="8" text-anchor="middle">hosts · event UUIDs</text>
+
+        <text x="380" y="150" fill="#64748b" font-size="7">event sites — custom code per event, served as static pages (sites/&lt;org&gt;/&lt;event&gt;/)</text>
+
+        <rect x="380" y="165" width="170" height="65" rx="6" fill="#0f172a"/>
+        <rect x="380" y="165" width="170" height="65" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="465" y="185" fill="white" font-size="10" font-weight="600" text-anchor="middle">demo.localhost</text>
+        <text x="465" y="199" fill="#94a3b8" font-size="8" text-anchor="middle">Demo Org</text>
+        <text x="465" y="213" fill="#94a3b8" font-size="8" text-anchor="middle">Orbit Summit · Launch Webinar</text>
+
+        <rect x="575" y="165" width="150" height="65" rx="6" fill="#0f172a"/>
+        <rect x="575" y="165" width="150" height="65" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="650" y="185" fill="white" font-size="10" font-weight="600" text-anchor="middle">auralis.localhost</text>
+        <text x="650" y="199" fill="#94a3b8" font-size="8" text-anchor="middle">Auralis Studio</text>
+        <text x="650" y="213" fill="#94a3b8" font-size="8" text-anchor="middle">Design Live</text>
+
+        <rect x="755" y="165" width="185" height="65" rx="6" fill="#0f172a"/>
+        <rect x="755" y="165" width="185" height="65" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="847" y="185" fill="white" font-size="10" font-weight="600" text-anchor="middle">admin.localhost</text>
+        <text x="847" y="199" fill="#94a3b8" font-size="8" text-anchor="middle">Admin console</text>
+        <text x="847" y="213" fill="#94a3b8" font-size="8" text-anchor="middle">one workspace per event</text>
+
+        <rect x="380" y="250" width="170" height="70" rx="6" fill="#0f172a"/>
+        <rect x="380" y="250" width="170" height="70" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="465" y="272" fill="white" font-size="11" font-weight="600" text-anchor="middle">Public API</text>
+        <text x="465" y="286" fill="#94a3b8" font-size="8" text-anchor="middle">register · join/&lt;token&gt;</text>
+        <text x="465" y="300" fill="#94a3b8" font-size="8" text-anchor="middle">rate-limited</text>
+
+        <rect x="575" y="250" width="150" height="70" rx="6" fill="#0f172a"/>
+        <rect x="575" y="250" width="150" height="70" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="650" y="272" fill="white" font-size="11" font-weight="600" text-anchor="middle">Admin API</text>
+        <text x="650" y="286" fill="#94a3b8" font-size="8" text-anchor="middle">eventRoute wrapper</text>
+        <text x="650" y="300" fill="#94a3b8" font-size="8" text-anchor="middle">review · messages · settings</text>
+
+        <rect x="755" y="250" width="185" height="70" rx="6" fill="#0f172a"/>
+        <rect x="755" y="250" width="185" height="70" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="847" y="272" fill="white" font-size="11" font-weight="600" text-anchor="middle">Email pipeline</text>
+        <text x="847" y="286" fill="#94a3b8" font-size="8" text-anchor="middle">message_jobs queue</text>
+        <text x="847" y="300" fill="#94a3b8" font-size="8" text-anchor="middle">drain cron · */5</text>
+
+        <text x="380" y="342" fill="#475569" font-size="7">core/ engine — auth, event-scoped data access, registration, messaging, security, audit (shared by every event)</text>
+
+        <!-- ================= SUPABASE ================= -->
+        <rect x="355" y="505" width="330" height="270" rx="12" fill="rgba(76, 29, 149, 0.06)" stroke="#a78bfa" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="367" y="523" fill="#a78bfa" font-size="10" font-weight="600">Supabase · ap-south-1</text>
+
+        <rect x="380" y="545" width="155" height="95" rx="6" fill="#0f172a"/>
+        <rect x="380" y="545" width="155" height="95" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="457" y="568" fill="white" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL</text>
+        <text x="457" y="586" fill="#94a3b8" font-size="8" text-anchor="middle">row-level security,</text>
+        <text x="457" y="598" fill="#94a3b8" font-size="8" text-anchor="middle">pinned to one event</text>
+        <text x="457" y="616" fill="#a78bfa" font-size="7" text-anchor="middle">orgs · events · registrations</text>
+        <text x="457" y="628" fill="#a78bfa" font-size="7" text-anchor="middle">message_jobs · audit_log</text>
+
+        <rect x="555" y="545" width="115" height="95" rx="6" fill="#0f172a"/>
+        <rect x="555" y="545" width="115" height="95" rx="6" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="612" y="568" fill="white" font-size="11" font-weight="600" text-anchor="middle">Auth</text>
+        <text x="612" y="586" fill="#94a3b8" font-size="8" text-anchor="middle">invite-only</text>
+        <text x="612" y="598" fill="#94a3b8" font-size="8" text-anchor="middle">TOTP MFA</text>
+        <text x="612" y="616" fill="#fb7185" font-size="7" text-anchor="middle">admins only —</text>
+        <text x="612" y="628" fill="#fb7185" font-size="7" text-anchor="middle">attendees never log in</text>
+
+        <rect x="380" y="660" width="155" height="50" rx="6" fill="#0f172a"/>
+        <rect x="380" y="660" width="155" height="50" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="457" y="680" fill="white" font-size="11" font-weight="600" text-anchor="middle">Storage</text>
+        <text x="457" y="694" fill="#94a3b8" font-size="8" text-anchor="middle">event assets · passes</text>
+
+        <!-- ================= EXTERNAL ================= -->
+        <rect x="705" y="505" width="260" height="270" rx="12" fill="rgba(30, 41, 59, 0.3)" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="717" y="523" fill="#94a3b8" font-size="10" font-weight="600">External services</text>
+
+        <rect x="720" y="545" width="230" height="50" rx="6" fill="#0f172a"/>
+        <rect x="720" y="545" width="230" height="50" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="835" y="565" fill="white" font-size="11" font-weight="600" text-anchor="middle">Resend</text>
+        <text x="835" y="579" fill="#94a3b8" font-size="8" text-anchor="middle">transactional + bulk email</text>
+
+        <rect x="720" y="615" width="230" height="50" rx="6" fill="#0f172a"/>
+        <rect x="720" y="615" width="230" height="50" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="835" y="635" fill="white" font-size="11" font-weight="600" text-anchor="middle">Upstash Redis</text>
+        <text x="835" y="649" fill="#94a3b8" font-size="8" text-anchor="middle">rate limiting</text>
+
+        <rect x="720" y="685" width="230" height="50" rx="6" fill="#0f172a"/>
+        <rect x="720" y="685" width="230" height="50" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="835" y="705" fill="white" font-size="11" font-weight="600" text-anchor="middle">Sentry</text>
+        <text x="835" y="719" fill="#94a3b8" font-size="8" text-anchor="middle">error tracking</text>
+
+        <!-- ================= LEGEND ================= -->
+        <text x="185" y="262" fill="white" font-size="10" font-weight="600">Legend</text>
+        <rect x="185" y="272" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="207" y="281" fill="#94a3b8" font-size="8">Event sites / admin UI</text>
+        <rect x="185" y="290" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="207" y="299" fill="#94a3b8" font-size="8">Engine (core/)</text>
+        <rect x="185" y="308" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="207" y="317" fill="#94a3b8" font-size="8">Database</text>
+        <rect x="185" y="326" width="16" height="10" rx="2" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1"/>
+        <text x="207" y="335" fill="#94a3b8" font-size="8">Security</text>
+        <rect x="185" y="344" width="16" height="10" rx="2" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1"/>
+        <text x="207" y="353" fill="#94a3b8" font-size="8">External service</text>
+        <line x1="185" y1="366" x2="201" y2="366" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <text x="207" y="369" fill="#94a3b8" font-size="8">auth / verify flow</text>
+        <rect x="185" y="378" width="16" height="10" rx="2" fill="transparent" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="207" y="387" fill="#94a3b8" font-size="8">provider boundary</text>
+
+        <!-- ================= ARROWS ================= -->
+        <line x1="140" y1="95" x2="183" y2="95" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="161" y="89" fill="#94a3b8" font-size="8" text-anchor="middle">HTTPS</text>
+        <line x1="140" y1="175" x2="183" y2="165" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="310" y1="102" x2="378" y2="102" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowamber)"/>
+        <text x="344" y="96" fill="#94a3b8" font-size="8" text-anchor="middle">HTTPS</text>
+
+        <line x1="550" y1="102" x2="573" y2="102" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+        <line x1="465" y1="133" x2="465" y2="163" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 520 133 L 520 148 L 650 148 L 650 163" fill="none" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 540 133 L 540 153 L 847 153 L 847 163" fill="none" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="700" y="146" fill="#64748b" font-size="7">rewrites /&lt;event&gt;/* to the right site</text>
+
+        <line x1="465" y1="230" x2="465" y2="248" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 650 230 L 650 240 L 465 240 L 465 248" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <line x1="847" y1="230" x2="847" y2="248" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="700" y="243" fill="#64748b" font-size="7">POST /&lt;event&gt;/api/register</text>
+
+        <path d="M 310 165 L 345 165 L 345 285 L 378 285" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowrose)"/>
+        <text x="282" y="258" fill="#fb7185" font-size="8">verify token</text>
+
+        <line x1="465" y1="320" x2="465" y2="543" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowviolet)"/>
+        <text x="470" y="440" fill="#94a3b8" font-size="8">RPCs · event pinned</text>
+
+        <path d="M 680 320 L 680 462 L 538 462 L 538 588" fill="none" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowviolet)"/>
+        <text x="560" y="455" fill="#94a3b8" font-size="8">review · bulk RPCs · audit</text>
+
+        <path d="M 650 320 L 650 430 L 615 430 L 615 543" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrowrose)"/>
+        <text x="618" y="424" fill="#fb7185" font-size="8">password + TOTP</text>
+
+        <line x1="930" y1="320" x2="930" y2="543" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="935" y="440" fill="#94a3b8" font-size="8">send</text>
+
+        <path d="M 378 300 L 332 300 L 332 650 L 718 650" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="500" y="643" fill="#94a3b8" font-size="8">rate-limit checks (Upstash)</text>
+
+        <path d="M 718 565 L 695 565 L 695 790 L 155 790 L 155 100 L 143 100" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="2,3" marker-end="url(#arrowhead)"/>
+        <text x="400" y="783" fill="#94a3b8" font-size="8">emails: acknowledgement · confirmation with personal join link</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot cyan"></div>
+          <h3>One platform, many events</h3>
+        </div>
+        <ul>
+          <li>• One deploy on Vercel, one Postgres — every event shares the engine</li>
+          <li>• Hostname picks the org: each org gets its own subdomain</li>
+          <li>• Each event's pages are custom code (sites/&lt;org&gt;/&lt;event&gt;/), no CMS</li>
+          <li>• proxy.ts resolves host → org → event before any code runs</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>Isolation by design</h3>
+        </div>
+        <ul>
+          <li>• The event id is in every admin URL and API call — never in the session</li>
+          <li>• Row-level security is pinned to one event per request</li>
+          <li>• Join links are signed per event (HKDF) — event A's token fails on event B</li>
+          <li>• Every admin action lands in an append-only audit_log</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot violet"></div>
+          <h3>The registration pipeline</h3>
+        </div>
+        <ul>
+          <li>• Register → acknowledgement email (queued, not sent inline)</li>
+          <li>• Review: manual confirm/waitlist/reject, or auto-confirm per event</li>
+          <li>• Confirmation email carries the personal webinar join link</li>
+          <li>• A cron drains the queue every 5 minutes; Resend delivers</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="footer">
+      Mash Events · local demo: supabase start + demo.sql · npm run dev · admin.localhost / demo.localhost / auralis..localhost
+    </p>
+  </div>
+</body>
+</html>
