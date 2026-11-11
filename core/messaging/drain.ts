@@ -8,6 +8,11 @@ import {
 import { releaseDueMessageIntents } from '../db/privileged/webinar';
 import { linkSecret, signJoinToken } from '../passes/join-token';
 import { issueQrPass } from '../db/privileged/passes';
+import {
+  getWhatsAppConfig,
+  isWhatsAppConfigured,
+  sendWhatsAppTemplate,
+} from './whatsapp';
 import { renderEmail } from './templates';
 import { sendEmail } from './email-transport';
 
@@ -147,6 +152,69 @@ export async function drainEmail(options: DrainOptions): Promise<DrainReport> {
             item.lease_id,
             'sent',
             result.providerMessageId
+          );
+          report.sent += 1;
+        } else {
+          await finishMessageItem(
+            eventId,
+            item.item_id,
+            item.lease_id,
+            result.retryable ? 'retry' : 'failed',
+            undefined,
+            result.error
+          );
+          if (result.retryable) report.retried += 1;
+          else report.failed += 1;
+        }
+      }
+      if (items.length < batchSize) break;
+    }
+    if (Date.now() - started >= budget) break;
+  }
+  return report;
+}
+
+/**
+ * Drains WhatsApp items for events with due work. Inert unless the Azure
+ * channel is configured — items simply stay queued until it is (§8.1).
+ */
+export async function drainWhatsapp(
+  options: DrainOptions
+): Promise<DrainReport> {
+  const config = getWhatsAppConfig();
+  if (!isWhatsAppConfigured(config)) {
+    return { claimed: 0, sent: 0, retried: 0, failed: 0 };
+  }
+
+  const started = Date.now();
+  const budget = options.budgetMs ?? 30_000;
+  const batchSize = options.batchSize ?? 25;
+  const report: DrainReport = { claimed: 0, sent: 0, retried: 0, failed: 0 };
+
+  const eventIds = options.onlyEventId
+    ? [options.onlyEventId]
+    : await eventsWithDueMessages('whatsapp');
+
+  for (const eventId of eventIds) {
+    while (Date.now() - started < budget) {
+      const items = await claimMessageItems(eventId, 'whatsapp', batchSize);
+      if (!items.length) break;
+      report.claimed += items.length;
+      for (const item of items) {
+        const result = await sendWhatsAppTemplate(item, config).catch(
+          (error) => ({
+            ok: false as const,
+            retryable: false,
+            error: error instanceof Error ? error.message : 'failed',
+          })
+        );
+        if (result.ok) {
+          await finishMessageItem(
+            eventId,
+            item.item_id,
+            item.lease_id,
+            'sent',
+            result.providerMessageId ?? undefined
           );
           report.sent += 1;
         } else {
