@@ -28,6 +28,11 @@ export default async function WorkspaceLayout({
       show: permissions.includes('messages.bulk'),
     },
     {
+      href: `${base}/check-in`,
+      label: 'Check-in',
+      show: permissions.includes('checkin.scan'),
+    },
+    {
       href: `${base}/settings`,
       label: 'Settings',
       show: permissions.includes('events.manage'),

@@ -93,6 +93,19 @@ function eventRewrite(
     };
   }
 
+  // /<event>/pass/<token> → the registrant's pass page for this event (§9.1).
+  if (rest[0] === 'pass') {
+    if (rest.length !== 2 || !/^[A-Za-z0-9._-]{10,400}$/.test(rest[1])) {
+      return { kind: 'not_found' };
+    }
+    return {
+      kind: 'rewrite',
+      pathname: `/api/public/events/${event.id}/pass/${rest[1]}`,
+      orgId: org.id,
+      eventId: event.id,
+    };
+  }
+
   const tail = rest.length ? `/${rest.join('/')}` : '';
   return {
     kind: 'rewrite',

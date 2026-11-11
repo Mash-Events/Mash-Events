@@ -7,6 +7,7 @@ import {
 } from '../db/privileged/messaging';
 import { releaseDueMessageIntents } from '../db/privileged/webinar';
 import { linkSecret, signJoinToken } from '../passes/join-token';
+import { issueQrPass } from '../db/privileged/passes';
 import { renderEmail } from './templates';
 import { sendEmail } from './email-transport';
 
@@ -62,6 +63,15 @@ async function joinUrlFor(item: ClaimedItem, eventUrl: string | null) {
   return `${eventUrl}/join/${token}`;
 }
 
+/** Personal QR pass page link for confirmed on-site registrations. */
+async function passUrlFor(item: ClaimedItem, eventUrl: string | null) {
+  const onSite =
+    item.event_kind === 'in_person' || item.event_kind === 'hybrid';
+  if (item.template_key !== 'confirmed' || !onSite || !eventUrl) return null;
+  const token = await issueQrPass(item.event_id, item.registration_id);
+  return token ? `${eventUrl}/pass/${token}` : null;
+}
+
 async function sendOne(item: ClaimedItem, options: DrainOptions) {
   const defaultFrom =
     process.env.RESEND_DEFAULT_FROM?.trim() || 'events@mash.example';
@@ -79,6 +89,7 @@ async function sendOne(item: ClaimedItem, options: DrainOptions) {
     eventUrl,
     subjectOverride: item.subject_override,
     joinUrl: await joinUrlFor(item, eventUrl),
+    passUrl: await passUrlFor(item, eventUrl),
     customSubject: item.job_subject,
     customBody: item.job_body,
   });

@@ -110,20 +110,24 @@ create trigger checkin_devices_updated_at before update on public.checkin_device
 -- RPCs (§5.7, §9.1, §9.2, S14). record_check_in re-checks the device secret,
 -- the event, and the pass itself: app-level checks are convenience only.
 
--- Issue (or return the live) pass for a registration. Service role: called
--- from the confirmation flow with a token hash the app computed.
+-- Get-or-issue the live pass for a registration (idempotent: re-issues and
+-- re-drains return the existing row; revoking then re-issues a new one).
+-- Service role: the caller signs the token and passes its sha256; the token
+-- itself embeds the pass id, so it can always be re-derived from the row.
 create or replace function public.issue_pass(
-  p_event_id uuid, p_registration_id uuid, p_token_hash bytea,
-  p_kind text, p_key_version integer default 1
+  p_event_id uuid, p_registration_id uuid, p_kind text,
+  p_token_hash_hex text, p_key_version integer default 1,
+  p_pass_id uuid default null
 )
-returns uuid
+returns jsonb
 language plpgsql
 security definer
 set search_path = ''
 as $$
 declare
-  v_id uuid;
   v_status text;
+  v_id uuid;
+  v_version integer;
 begin
   select status into v_status from public.registrations
    where id = p_registration_id and event_id = p_event_id;
@@ -131,15 +135,30 @@ begin
     raise exception 'registration is not confirmed for this event'
       using errcode = 'no_data_found';
   end if;
+  if p_token_hash_hex is null or p_token_hash_hex !~ '^[0-9a-f]{64}$' then
+    raise exception 'token hash must be sha256 hex'
+      using errcode = 'check_violation';
+  end if;
 
-  insert into public.passes (org_id, event_id, registration_id, token_hash,
-    key_version, kind)
-  select e.org_id, p_event_id, p_registration_id, p_token_hash,
-    greatest(p_key_version, 1), p_kind
-  from public.events e where e.id = p_event_id
+  select id, key_version into v_id, v_version
+    from public.passes
+   where event_id = p_event_id and registration_id = p_registration_id
+     and kind = p_kind and status = 'issued';
+  if found then
+    return jsonb_build_object('pass_id', v_id, 'key_version', v_version,
+      'existing', true);
+  end if;
+
+  insert into public.passes (id, org_id, event_id, registration_id,
+    token_hash, key_version, kind)
+  values (coalesce(p_pass_id, gen_random_uuid()),
+    (select org_id from public.events where id = p_event_id),
+    p_event_id, p_registration_id, decode(p_token_hash_hex, 'hex'),
+    greatest(p_key_version, 1), p_kind)
   on conflict (event_id, token_hash) do update set updated_at = now()
-  returning id into v_id;
-  return v_id;
+  returning id, key_version into v_id, v_version;
+  return jsonb_build_object('pass_id', v_id, 'key_version', v_version,
+    'existing', false);
 end;
 $$;
 
@@ -172,7 +191,7 @@ $$;
 -- A scanner session, bound to one event. The raw secret never leaves the
 -- scanner page; only its sha256 is stored.
 create or replace function public.create_checkin_device(
-  p_event_id uuid, p_label text, p_device_secret_hash bytea,
+  p_event_id uuid, p_label text, p_device_secret_hash_hex text,
   p_expires_hours integer default 12
 )
 returns uuid
@@ -186,14 +205,16 @@ begin
   if not app.has_event_permission(p_event_id, 'checkin.scan') then
     raise exception 'forbidden' using errcode = 'insufficient_privilege';
   end if;
-  if length(p_device_secret_hash) <> 32 then
-    raise exception 'device secret hash must be sha256'
+  if p_device_secret_hash_hex is null
+     or p_device_secret_hash_hex !~ '^[0-9a-f]{64}$' then
+    raise exception 'device secret hash must be sha256 hex'
       using errcode = 'check_violation';
   end if;
 
   insert into public.checkin_devices (org_id, event_id, label,
     device_secret_hash, created_by, expires_at)
-  select e.org_id, p_event_id, p_label, p_device_secret_hash, auth.uid(),
+  select e.org_id, p_event_id, p_label,
+    decode(p_device_secret_hash_hex, 'hex'), auth.uid(),
     now() + make_interval(hours => greatest(p_expires_hours, 1))
   from public.events e where e.id = p_event_id
   returning id into v_id;
@@ -238,7 +259,7 @@ $$;
 -- (event, token hash), registration must still be confirmed.
 create or replace function public.record_check_in(
   p_event_id uuid, p_device_id uuid, p_device_secret text,
-  p_pass_id uuid, p_token_hash bytea
+  p_pass_id uuid, p_token_hash_hex text
 )
 returns jsonb
 language plpgsql
@@ -285,8 +306,12 @@ begin
     return jsonb_build_object('result', 'event_closed');
   end if;
 
+  if p_token_hash_hex is null or p_token_hash_hex !~ '^[0-9a-f]{64}$' then
+    return jsonb_build_object('result', 'pass_not_found');
+  end if;
   select * into v_pass from public.passes
-   where id = p_pass_id and event_id = p_event_id and token_hash = p_token_hash;
+   where id = p_pass_id and event_id = p_event_id
+     and token_hash = decode(p_token_hash_hex, 'hex');
   if v_pass.id is null then
     v_reason := 'pass unknown for this event';
   elsif v_pass.status <> 'issued' then
@@ -336,9 +361,10 @@ begin
 end;
 $$;
 
--- Manual fallback (§9.2) for the workspace's search-by-name flow.
+-- Manual fallback (§9.2) for the workspace: checks in by badge code, so
+-- checkin-only staff never need registrations.read.
 create or replace function public.record_manual_check_in(
-  p_event_id uuid, p_registration_id uuid
+  p_event_id uuid, p_code text
 )
 returns jsonb
 language plpgsql
@@ -355,9 +381,11 @@ begin
   end if;
   select * into v_event from public.events where id = p_event_id;
   select * into v_reg from public.registrations
-   where id = p_registration_id and event_id = p_event_id;
+   where event_id = p_event_id and code = upper(coalesce(p_code, ''));
   if v_reg.id is null or v_reg.status <> 'confirmed' then
-    return jsonb_build_object('result', 'registration_not_confirmed');
+    return jsonb_build_object('result',
+      case when v_reg.id is null then 'pass_not_found'
+           else 'registration_not_confirmed' end);
   end if;
   v_day := coalesce((now() at time zone v_event.timezone)::date, current_date);
   insert into public.check_ins (org_id, event_id, registration_id, event_day,
@@ -366,27 +394,28 @@ begin
   on conflict (event_id, registration_id, event_day) do nothing;
   return jsonb_build_object('result',
     case when found then 'checked_in' else 'already_checked_in' end,
-    'registration_code', v_reg.code);
+    'registration_code', v_reg.code,
+    'name', v_reg.first_name || ' ' || v_reg.last_name);
 end;
 $$;
 
-revoke execute on function public.issue_pass(uuid, uuid, bytea, text, integer),
-  public.record_check_in(uuid, uuid, text, uuid, bytea)
+revoke execute on function public.issue_pass(uuid, uuid, text, text, integer, uuid),
+  public.record_check_in(uuid, uuid, text, uuid, text)
   from public, anon, authenticated;
-grant execute on function public.issue_pass(uuid, uuid, bytea, text, integer)
+grant execute on function public.issue_pass(uuid, uuid, text, text, integer, uuid)
   to service_role;
 -- record_check_in is callable by a signed-in scanner (eventRoute checks
 -- checkin.scan for the event); the device secret is re-checked inside.
-grant execute on function public.record_check_in(uuid, uuid, text, uuid, bytea)
+grant execute on function public.record_check_in(uuid, uuid, text, uuid, text)
   to authenticated;
 
 revoke execute on function public.revoke_pass(uuid, uuid),
-  public.create_checkin_device(uuid, text, bytea, integer),
+  public.create_checkin_device(uuid, text, text, integer),
   public.revoke_checkin_device(uuid, uuid),
-  public.record_manual_check_in(uuid, uuid)
+  public.record_manual_check_in(uuid, text)
   from public, anon;
 grant execute on function public.revoke_pass(uuid, uuid),
-  public.create_checkin_device(uuid, text, bytea, integer),
+  public.create_checkin_device(uuid, text, text, integer),
   public.revoke_checkin_device(uuid, uuid),
-  public.record_manual_check_in(uuid, uuid)
+  public.record_manual_check_in(uuid, text)
   to authenticated;

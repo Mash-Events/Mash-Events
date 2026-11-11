@@ -8,6 +8,8 @@ export type WorkspaceEvent = {
   name: string;
   status: string;
   timezone: string;
+  /** Current pass signing key version (events.pass_key_version). */
+  passKeyVersion: number;
 };
 
 const UUID =
@@ -24,6 +26,7 @@ type EventRow = {
   name: string;
   status: string;
   timezone: string;
+  pass_key_version: number;
 };
 
 function toWorkspaceEvent(row: EventRow): WorkspaceEvent {
@@ -34,6 +37,7 @@ function toWorkspaceEvent(row: EventRow): WorkspaceEvent {
     name: row.name,
     status: row.status,
     timezone: row.timezone,
+    passKeyVersion: Number(row.pass_key_version ?? 1),
   };
 }
 
@@ -46,7 +50,7 @@ export async function loadEventBySlugs(
   const { data, error } = await supabase
     .from('events')
     .select(
-      'id, org_id, slug, name, status, timezone, organizations!inner(slug, name)'
+      'id, org_id, slug, name, status, timezone, pass_key_version, organizations!inner(slug, name)'
     )
     .eq('slug', eventSlug)
     .eq('organizations.slug', orgSlug)
@@ -72,7 +76,7 @@ export async function loadVisibleEvent(
   const supabase = await createAuthClient();
   const { data, error } = await supabase
     .from('events')
-    .select('id, org_id, slug, name, status, timezone')
+    .select('id, org_id, slug, name, status, timezone, pass_key_version')
     .eq('id', eventId)
     .maybeSingle();
   if (error || !data) return null;
@@ -83,5 +87,6 @@ export async function loadVisibleEvent(
     name: data.name,
     status: data.status,
     timezone: data.timezone,
+    passKeyVersion: Number(data.pass_key_version ?? 1),
   };
 }

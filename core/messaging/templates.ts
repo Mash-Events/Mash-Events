@@ -17,6 +17,8 @@ export type EmailContext = {
   subjectOverride: string | null;
   /** Personal webinar join link (signed per registrant and event). */
   joinUrl?: string | null;
+  /** Personal QR pass page link (on-site events, signed per pass). */
+  passUrl?: string | null;
   /** Subject and body of a custom (bulk or scheduled) message. */
   customSubject?: string | null;
   customBody?: string | null;
@@ -77,7 +79,8 @@ function copyFor(ctx: EmailContext): Copy {
           `Your registration code is ${ctx.registrationCode}.`,
         ],
       };
-    case 'confirmed':
+    case 'confirmed': {
+      const onSite = !isWebinar;
       return {
         subject: `You're confirmed for ${ctx.eventName}`,
         heading: 'Your place is confirmed',
@@ -90,9 +93,15 @@ function copyFor(ctx: EmailContext): Copy {
           ...(isWebinar && ctx.joinUrl
             ? ['Your personal joining link is below. Please do not share it.']
             : []),
+          ...(onSite && ctx.passUrl
+            ? [
+                'Your entry pass is below — open it and show the QR code at the gate. Screenshot it in case the venue has poor signal.',
+              ]
+            : []),
           `Your registration code is ${ctx.registrationCode}.`,
         ],
       };
+    }
     case 'waitlisted':
       return {
         subject: `You're on the waitlist for ${ctx.eventName}`,
@@ -140,6 +149,7 @@ export function renderEmail(ctx: EmailContext): RenderedEmail {
     '',
     ...copy.paragraphs.flatMap((p) => [p, '']),
     ...(ctx.joinUrl ? [`Join the session: ${ctx.joinUrl}`, ''] : []),
+    ...(ctx.passUrl ? [`Your entry pass: ${ctx.passUrl}`, ''] : []),
     ...(ctx.eventUrl ? [`Event page: ${ctx.eventUrl}`, ''] : []),
     signOff,
     `${ctx.eventName} · organised by ${ctx.orgName}`,
@@ -160,6 +170,7 @@ export function renderEmail(ctx: EmailContext): RenderedEmail {
 ${p(greeting)}
 ${copy.paragraphs.map(p).join('\n')}
 ${ctx.joinUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.joinUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Join the session</a></p>` : ''}
+${ctx.passUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.passUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Show my entry pass</a></p>` : ''}
 ${ctx.eventUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.eventUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">View event page</a></p>` : ''}
 ${p(signOff)}
 </td></tr></table>
