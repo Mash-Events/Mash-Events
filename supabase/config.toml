@@ -65,11 +65,13 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
+# Stay disabled: `supabase test db` runs the pgTAP suite against the current
+# database, and the tests expect an empty platform. Apply the demo data
+# manually after a reset: `npm run sb:demo`.
+enabled = false
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./demo.sql"]
+sql_paths = ["./seed.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
