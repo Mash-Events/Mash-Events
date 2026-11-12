@@ -44,7 +44,9 @@ const devOrgs: readonly OrgEntry[] = [
   {
     id: AURALIS_ORG_ID,
     slug: 'auralis',
-    hosts: ['auralis.localhost'],
+    // dev-vm.tail69cb10.ts.net: the VM's Tailscale MagicDNS name — resolvable
+    // from every tailnet device (phones included) with no hosts-file edits.
+    hosts: ['auralis.localhost', 'dev-vm.tail69cb10.ts.net'],
     events: [{ id: AURALIS_EVENT_ID, slug: 'design-live' }],
   },
 ];
