@@ -23,6 +23,8 @@ export type EmailContext = {
   certUrl?: string | null;
   /** Public verification URL for the event's certificates. */
   verifyUrl?: string | null;
+  /** Public feedback form URL for the event. */
+  feedbackUrl?: string | null;
   /** Subject and body of a custom (bulk or scheduled) message. */
   customSubject?: string | null;
   customBody?: string | null;
@@ -37,6 +39,7 @@ export const EMAIL_TEMPLATES = [
   'rejected',
   'custom',
   'certificate_issued',
+  'feedback_request',
 ] as const;
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATES)[number];
 
@@ -143,6 +146,17 @@ function copyFor(ctx: EmailContext): Copy {
             : []),
         ],
       };
+    case 'feedback_request':
+      return {
+        subject: `How was ${ctx.eventName}?`,
+        heading: 'Tell us what you thought',
+        paragraphs: [
+          `Thank you for being part of ${ctx.eventName}. Your feedback takes one minute and shapes the next edition.`,
+          ...(ctx.feedbackUrl
+            ? ['Share your feedback with the button below.']
+            : []),
+        ],
+      };
     case 'custom':
       if (!ctx.customSubject || !ctx.customBody) {
         throw new Error('custom email needs a subject and body');
@@ -196,6 +210,7 @@ ${copy.paragraphs.map(p).join('\n')}
 ${ctx.joinUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.joinUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Join the session</a></p>` : ''}
 ${ctx.passUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.passUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Show my entry pass</a></p>` : ''}
 ${ctx.certUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.certUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Open my certificate</a></p>` : ''}
+${ctx.feedbackUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.feedbackUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Share feedback</a></p>` : ''}
 ${ctx.eventUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.eventUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">View event page</a></p>` : ''}
 ${p(signOff)}
 </td></tr></table>

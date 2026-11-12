@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createEventClient } from '@core/auth/server';
 import { loadWorkspace } from '@core/admin/workspace';
 import { REGISTRATION_STATUSES } from '@core/registration/transitions';
+import { AnnouncementsComposer } from './announcements-composer';
 
 export default async function WorkspaceOverview({
   params,
@@ -33,6 +34,9 @@ export default async function WorkspaceOverview({
 
   return (
     <div className="space-y-8">
+      {permissions.includes('content.edit') ? (
+        <AnnouncementsComposer eventId={event.id} />
+      ) : null}
       <section>
         <h1 className="text-2xl font-semibold text-stone-900">Overview</h1>
         <p className="mt-1 text-sm text-stone-600">

@@ -11,6 +11,8 @@ import { formatDate, formatTime, timeZoneLabel } from '@core/ui/site/format';
 import { RegistrationForm } from '@core/ui/site/registration-form';
 import { ContactForm } from '@core/ui/site/contact-form';
 import { HappeningNow } from '@core/ui/site/live-now';
+import { AnnouncementStripe } from '@core/ui/site/announcement-stripe';
+import { AgendaPlanner } from '@core/ui/site/agenda-planner';
 import { ArrowRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -882,6 +884,9 @@ function Home({ content, basePath }: SitePageProps) {
       <main>
         <Nav basePath={basePath} />
         <Hero content={content} basePath={basePath} />
+        {content.announcements?.length ? (
+          <AnnouncementStripe announcements={content.announcements} />
+        ) : null}
         <Section
           kicker="On the stages"
           title="Meet the speakers"
@@ -929,6 +934,12 @@ function AgendaPage({ content, basePath }: SitePageProps) {
         .map((id) => speakerNames.get(id))
         .filter(Boolean) as string[],
     }));
+  const plannerSessions = content.sessions.map((session) => ({
+    ...session,
+    speakers: session.speaker_ids
+      .map((id) => speakerNames.get(id))
+      .filter(Boolean) as string[],
+  }));
 
   return (
     <Shell>
@@ -945,7 +956,27 @@ function AgendaPage({ content, basePath }: SitePageProps) {
         />
         <section className="bg-white text-black">
           <div className="mx-auto max-w-6xl px-6 py-14">
-            <Agenda content={content} />
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <a
+                href={`${basePath}/calendar`}
+                className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-[#cb1977]"
+              >
+                Add event to calendar
+              </a>
+              {content.feedback?.enabled ? (
+                <a
+                  href={`${basePath}/feedback`}
+                  className="rounded-full border border-black/20 px-4 py-2 text-sm font-semibold text-black hover:border-[#cb1977] hover:text-[#cb1977]"
+                >
+                  Share feedback
+                </a>
+              ) : null}
+            </div>
+            <AgendaPlanner
+              sessions={plannerSessions}
+              eventTitle={content.event.name}
+              storageKey={content.event.slug}
+            />
           </div>
         </section>
         <Register content={content} basePath={basePath} />

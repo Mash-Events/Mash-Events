@@ -144,6 +144,26 @@ function eventRewrite(
     };
   }
 
+  // /<event>/calendar → the event (or ?session=<id>) as an iCalendar file.
+  if (rest[0] === 'calendar' && rest.length === 1) {
+    return {
+      kind: 'rewrite',
+      pathname: `/api/public/events/${event.id}/calendar`,
+      orgId: org.id,
+      eventId: event.id,
+    };
+  }
+
+  // /<event>/feedback → the public event feedback form (page + submit).
+  if (rest[0] === 'feedback' && rest.length === 1) {
+    return {
+      kind: 'rewrite',
+      pathname: `/api/public/events/${event.id}/feedback`,
+      orgId: org.id,
+      eventId: event.id,
+    };
+  }
+
   // /<event>/api/submit → the generic per-event form endpoint (§16.4).
   if (rest[0] === 'api' && rest[1] === 'submit' && rest.length === 2) {
     return {

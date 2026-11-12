@@ -43,6 +43,11 @@ export default async function WorkspaceLayout({
       show: permissions.includes('submissions.review'),
     },
     {
+      href: `${base}/feedback`,
+      label: 'Feedback',
+      show: permissions.includes('registrations.read'),
+    },
+    {
       href: `${base}/settings`,
       label: 'Settings',
       show: permissions.includes('events.manage'),

@@ -48,11 +48,37 @@ export type PublicSponsor = {
   url: string | null;
 };
 
+export type PublicAnnouncement = {
+  id: string;
+  body: string;
+  level: 'info' | 'highlight';
+  published_at: string;
+};
+
+export type FeedbackQuestion = {
+  key: string;
+  label: string;
+  type: 'text' | 'textarea' | 'select';
+  options?: string[];
+  required?: boolean;
+};
+
+export type PublicFeedbackForm = {
+  enabled: boolean;
+  headline: string;
+  thanks: string;
+  questions: FeedbackQuestion[];
+};
+
 export type EventContent = {
   event: PublicEvent;
   speakers: PublicSpeaker[];
   sessions: PublicSession[];
   sponsors: PublicSponsor[];
+  /** Latest published announcements, newest first (may be missing). */
+  announcements?: PublicAnnouncement[];
+  /** The event's feedback form, only when enabled (else absent). */
+  feedback?: PublicFeedbackForm | null;
 };
 
 export type SitePageProps = {

@@ -94,6 +94,12 @@ function verifyUrlFor(item: ClaimedItem, eventUrl: string | null) {
   return `${eventUrl}/verify/${item.registration_code}`;
 }
 
+/** Public feedback form link for feedback_request emails. */
+function feedbackUrlFor(item: ClaimedItem, eventUrl: string | null) {
+  if (item.template_key !== 'feedback_request' || !eventUrl) return null;
+  return `${eventUrl}/feedback`;
+}
+
 async function sendOne(item: ClaimedItem, options: DrainOptions) {
   const defaultFrom =
     process.env.RESEND_DEFAULT_FROM?.trim() || 'events@mash.example';
@@ -114,6 +120,7 @@ async function sendOne(item: ClaimedItem, options: DrainOptions) {
     passUrl: await passUrlFor(item, eventUrl),
     certUrl: await certUrlFor(item, eventUrl),
     verifyUrl: verifyUrlFor(item, eventUrl),
+    feedbackUrl: feedbackUrlFor(item, eventUrl),
     customSubject: item.job_subject,
     customBody: item.job_body,
   });

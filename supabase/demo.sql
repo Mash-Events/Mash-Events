@@ -303,3 +303,20 @@ values ('d2e3f4a5-6b7c-4d8e-9f0a-1b2c3d4e5f60',
   'c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f', 'Local demo authenticator', 'totp',
   'verified', 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP', now(), now())
 on conflict (id) do nothing;
+
+-- Demo feedback form for Orbit Summit (shows /orbit-summit/feedback and the
+-- agenda "Share feedback" link once the event has happened).
+insert into public.event_feedback_forms (event_id, org_id, enabled, headline,
+  thanks, questions)
+values ('9f8e7d6c-5b4a-4c3d-9e2f-1a2b3c4d5e6f',
+  '0d6b6f5e-4a1c-4c3e-9a2b-6d3c1e7f8a10', true,
+  'How was Orbit Summit 2026?',
+  'Thank you — see you at the next orbit.',
+  jsonb_build_array(
+    jsonb_build_object('key', 'best_bit', 'label', 'What was the best bit?',
+      'type', 'textarea'),
+    jsonb_build_object('key', 'improve', 'label', 'What should we improve?',
+      'type', 'textarea'),
+    jsonb_build_object('key', 'next_year', 'label', 'Would you come back?',
+      'type', 'select', 'options', jsonb_build_array('Yes', 'Maybe', 'No'))))
+on conflict (event_id) do nothing;

@@ -16,7 +16,7 @@ begin
   if not app.has_event_permission(p_event_id, 'exports.pii') then
     raise exception 'forbidden' using errcode = 'insufficient_privilege';
   end if;
-  if p_kind not in ('roster', 'submissions', 'attendance') then
+  if p_kind not in ('roster', 'submissions', 'attendance', 'feedback') then
     raise exception 'invalid export kind' using errcode = 'check_violation';
   end if;
 
