@@ -7,7 +7,7 @@ import { verifyTurnstile } from '@core/security/turnstile';
 import { getPublicEvent } from '@core/db/privileged/registrations';
 import { submitSubmission } from '@core/db/privileged/submissions';
 import { sendEmail } from '@core/messaging/email-transport';
-import { escapeHtml } from '@core/messaging/templates';
+import { escapeHtml, headerSafe } from '@core/messaging/templates';
 
 // POST <org host>/<event-slug>/api/submit (docs/system-design.md §16.4
 // phase 3): the generic per-event form endpoint behind contact, speaker,
@@ -176,10 +176,12 @@ ${field('Event', event.name)}
 <tr><td align="left" style="padding:18px 40px 31px;color:#78716c;font-size:12px;line-height:18px;text-align:left">${escapeHtml(event.name)}</td></tr>
 </table></td></tr></table></body></html>`;
       await sendEmail({
-        from: `"${fromName}" <${defaultFrom}>`,
+        from: `"${headerSafe(fromName)}" <${defaultFrom}>`,
         to: inbox,
         replyTo: input.email,
-        subject: `[${event.name}] New ${input.kind.replace(/_/g, ' ')} from ${input.name}`,
+        subject: headerSafe(
+          `[${event.name}] New ${input.kind.replace(/_/g, ' ')} from ${input.name}`
+        ),
         text: `${input.name} <${input.email}> wrote:\n\n${input.message}\n\nReply to this email to respond directly.`,
         html,
         tags: [

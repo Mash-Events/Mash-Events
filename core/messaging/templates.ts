@@ -44,13 +44,20 @@ export const EMAIL_TEMPLATES = [
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATES)[number];
 
 export function escapeHtml(value: string): string {
-  return value
+  return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+/**
+ * Header-safe text for email subjects and addresses — re-exported for
+ * convenience; the implementation lives in header-safe.ts (a pure module
+ * the tests can import).
+ */
+export { headerSafe } from './header-safe.ts';
 
 function when(ctx: EmailContext): string | null {
   if (!ctx.eventStartsAt) return null;

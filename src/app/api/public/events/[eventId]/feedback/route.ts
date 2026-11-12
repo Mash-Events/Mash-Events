@@ -129,6 +129,18 @@ export async function POST(
     return new Response('Not found', { status: 404, headers: HEADERS });
   }
 
+  // Same-origin only: browsers always send Origin on form POSTs, and a
+  // cross-site form firing at this URL is an attack, not a visitor.
+  const host = request.headers.get('host');
+  const origin = request.headers.get('origin');
+  if (!origin || !host || new URL(origin).host !== host) {
+    return page(
+      'Feedback',
+      '<h1>Feedback</h1><p>That request did not come from this site.</p>',
+      403
+    );
+  }
+
   const ip = clientIp(request.headers) ?? 'unknown';
   if (
     !(await allow([
