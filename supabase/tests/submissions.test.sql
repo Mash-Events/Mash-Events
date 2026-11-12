@@ -41,8 +41,8 @@ select is(
   public.submit_submission('24000000-0000-4000-8000-000000000001',
     'contact', 'Meera Kapoor', 'meera@example.org',
     'Hello, I would like to know more.',
-    jsonb_build_object('topic', 'sponsors')),
-  jsonb_build_object('result', 'received'), 'valid submission stored');
+    jsonb_build_object('topic', 'sponsors')) ->> 'result',
+  'received', 'valid submission stored');
 
 -- Invalid shapes are rejected.
 select throws_ok(

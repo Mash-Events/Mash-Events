@@ -62,13 +62,14 @@ on conflict (id) do nothing;
 
 insert into public.events (id, org_id, slug, name, short_name, kind, timezone,
   status, starts_at, ends_at, registration_opens_at, registration_closes_at,
-  capacity, waitlist_enabled, review_mode)
+  capacity, waitlist_enabled, review_mode, settings)
 values ('9f8e7d6c-5b4a-4c3d-9e2f-1a2b3c4d5e6f', '0d6b6f5e-4a1c-4c3e-9a2b-6d3c1e7f8a10',
   'orbit-summit', 'Orbit Summit 2026', 'Orbit Summit', 'hybrid', 'Asia/Kolkata',
   'registration_open',
   '2026-12-18 09:00:00+05:30', '2026-12-18 16:30:00+05:30',
   now() - interval '2 days', '2026-12-16 23:59:00+05:30',
-  300, true, 'manual')
+  300, true, 'manual',
+  jsonb_build_object('submission_inbox_email', 'admin@example.org'))
 on conflict (id) do nothing;
 
 insert into public.event_speakers (id, org_id, event_id, name, title, affiliation, bio, sort)

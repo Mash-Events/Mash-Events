@@ -33,9 +33,11 @@ const STATUS_STYLE: Record<string, string> = {
 export function SubmissionsScreen({
   eventId,
   eventName,
+  canExport,
 }: {
   eventId: string;
   eventName: string;
+  canExport?: boolean;
 }) {
   const [rows, setRows] = useState<SubmissionRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -43,6 +45,25 @@ export function SubmissionsScreen({
   const [status, setStatus] = useState<string>('all');
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+
+  async function exportSubmissions() {
+    if (busy) return;
+    setBusy('export');
+    try {
+      const result = await eventApi<{ url: string; count: number }>(
+        eventId,
+        '/exports/submissions',
+        { method: 'POST', body: { format: 'csv' } }
+      );
+      window.open(result.url, '_blank', 'noopener');
+    } catch (e) {
+      setLoadError(
+        e instanceof AdminApiError ? e.message : 'The export failed. Try again.'
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
 
   const load = useCallback(() => {
     eventApi<{ submissions: SubmissionRow[] }>(eventId, '/submissions')
@@ -116,6 +137,16 @@ export function SubmissionsScreen({
           <option value="in_review">In review</option>
           <option value="done">Done</option>
         </select>
+        {canExport ? (
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={exportSubmissions}
+            className="rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
+          >
+            {busy === 'export' ? 'Preparing…' : 'Export submissions'}
+          </button>
+        ) : null}
       </div>
 
       {loadError ? (

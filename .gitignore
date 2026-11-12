@@ -32,3 +32,4 @@ Thumbs.db
 *.sql.gz
 *.dump
 *.age
+.claude/

@@ -37,7 +37,10 @@ const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 const TURNSTILE_SRC =
   'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
-function useTurnstile(container: React.RefObject<HTMLDivElement | null>) {
+export function useTurnstile(
+  container: React.RefObject<HTMLDivElement | null>,
+  action: string
+) {
   const [token, setToken] = useState<string | undefined>();
   const widget = useRef<string | undefined>(undefined);
 
@@ -48,7 +51,7 @@ function useTurnstile(container: React.RefObject<HTMLDivElement | null>) {
       if (window.turnstile && el && !widget.current) {
         widget.current = window.turnstile.render(el, {
           sitekey: SITE_KEY,
-          action: 'register',
+          action,
           callback: (t: string) => setToken(t),
           'expired-callback': () => setToken(undefined),
         });
@@ -66,7 +69,7 @@ function useTurnstile(container: React.RefObject<HTMLDivElement | null>) {
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [container]);
+  }, [container, action]);
 
   const reset = () => {
     setToken(undefined);
@@ -88,7 +91,7 @@ export function RegistrationForm({
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [whatsapp, setWhatsapp] = useState(false);
   const captchaBox = useRef<HTMLDivElement>(null);
-  const turnstile = useTurnstile(captchaBox);
+  const turnstile = useTurnstile(captchaBox, 'register');
 
   if (!open) {
     return (

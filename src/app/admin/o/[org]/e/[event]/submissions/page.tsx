@@ -15,5 +15,11 @@ export default async function SubmissionsPage({
   const { event, permissions } = await loadWorkspace(org, eventSlug);
   if (!permissions.includes('submissions.review')) notFound();
 
-  return <SubmissionsScreen eventId={event.id} eventName={event.name} />;
+  return (
+    <SubmissionsScreen
+      eventId={event.id}
+      eventName={event.name}
+      canExport={permissions.includes('exports.pii')}
+    />
+  );
 }

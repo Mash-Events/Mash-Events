@@ -21,6 +21,7 @@ export default async function CheckInPage({
       eventId={event.id}
       eventName={event.name}
       canSpot={permissions.includes('registrations.review')}
+      canExport={permissions.includes('exports.pii')}
     />
   );
 }

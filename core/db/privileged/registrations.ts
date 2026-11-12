@@ -14,6 +14,7 @@ export type PublicEvent = {
   slug: string;
   name: string;
   status: string;
+  settings: Record<string, unknown> | null;
 };
 
 /** Minimal event facts for a public route (id comes from host + slug). */
@@ -22,7 +23,7 @@ export async function getPublicEvent(
 ): Promise<PublicEvent | null> {
   const { data, error } = await getPrivilegedClient()
     .from('events')
-    .select('id, org_id, slug, name, status')
+    .select('id, org_id, slug, name, status, settings')
     .eq('id', eventId)
     .maybeSingle();
   if (error) throw error;

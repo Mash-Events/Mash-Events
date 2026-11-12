@@ -9,6 +9,7 @@ import type {
 } from '@core/site/types';
 import { formatDate, formatTime, timeZoneLabel } from '@core/ui/site/format';
 import { RegistrationForm } from '@core/ui/site/registration-form';
+import { ContactForm } from '@core/ui/site/contact-form';
 import { ArrowRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -596,6 +597,38 @@ function Register({ content, basePath }: SitePageProps) {
   );
 }
 
+function Contact({ basePath }: { basePath: string }) {
+  return (
+    <section id="contact" className="bg-[#f5f5f4] text-black">
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-2">
+        <div>
+          <Eyebrow>Contact</Eyebrow>
+          <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
+            Talk to the team
+          </h2>
+          <p className="mt-6 max-w-md leading-relaxed text-black/70">
+            Want to sponsor a track, partner with Orbit, cover the summit for
+            your outlet, or just ask a question? Every message lands with the
+            organising team and gets a personal reply.
+          </p>
+          <p className="mt-8 text-sm text-black/50">
+            Prefer email? Write to{' '}
+            <a
+              href="mailto:hello@example.org"
+              className="font-semibold text-[#cb1977] hover:text-black"
+            >
+              hello@example.org
+            </a>
+          </p>
+        </div>
+        <div className="rounded-3xl border border-black/10 bg-white p-6 shadow-[0_25px_60px_-30px_rgba(0,0,0,0.35)] sm:p-8">
+          <ContactForm basePath={basePath} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Faq() {
   return (
     <section className="bg-white text-black">
@@ -729,6 +762,7 @@ function Home({ content, basePath }: SitePageProps) {
         {content.sponsors.length ? <Sponsors content={content} /> : null}
         <Quotes />
         <Register content={content} basePath={basePath} />
+        <Contact basePath={basePath} />
         <Faq />
         <Footer content={content} basePath={basePath} />
       </main>

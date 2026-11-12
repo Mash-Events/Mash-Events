@@ -5,7 +5,10 @@ import { getPrivilegedClient } from './client';
 // first, always; the public route has already checked the proxy marker,
 // origin, rate limits and body schema before calling these.
 
-export type SubmitSubmissionResult = { result: 'received' | 'not_found' };
+export type SubmitSubmissionResult = {
+  result: 'received' | 'not_found';
+  id?: string;
+};
 
 export async function submitSubmission(
   eventId: string,

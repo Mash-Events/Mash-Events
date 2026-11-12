@@ -50,10 +50,12 @@ export function CheckInScreen({
   eventId,
   eventName,
   canSpot,
+  canExport,
 }: {
   eventId: string;
   eventName: string;
   canSpot?: boolean;
+  canExport?: boolean;
 }) {
   const [device, setDevice] = useState<Device | null>(null);
   const [deviceError, setDeviceError] = useState<string | null>(null);
@@ -62,7 +64,7 @@ export function CheckInScreen({
   const [spotFirst, setSpotFirst] = useState('');
   const [spotLast, setSpotLast] = useState('');
   const [spotEmail, setSpotEmail] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | boolean>(false);
   const [last, setLast] = useState<ScanOutcome | null>(null);
   const [feed, setFeed] = useState<Feed | null>(null);
   const scanRef = useRef<HTMLInputElement>(null);
@@ -193,11 +195,44 @@ export function CheckInScreen({
     }
   }
 
+  async function exportAttendance() {
+    if (busy) return;
+    setBusy('export');
+    try {
+      const result = await eventApi<{ url: string; count: number }>(
+        eventId,
+        '/exports/attendance',
+        { method: 'POST', body: { format: 'csv' } }
+      );
+      window.open(result.url, '_blank', 'noopener');
+    } catch (e) {
+      setLast({
+        result: 'error',
+        registration_code: null,
+        name: e instanceof AdminApiError ? e.message : 'The export failed.',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-stone-900">Check-in</h1>
-        <p className="text-sm text-stone-600">{eventName}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-stone-900">Check-in</h1>
+          <p className="text-sm text-stone-600">{eventName}</p>
+        </div>
+        {canExport ? (
+          <button
+            type="button"
+            disabled={Boolean(busy)}
+            onClick={exportAttendance}
+            className="rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
+          >
+            {busy === 'export' ? 'Preparing…' : 'Export attendance'}
+          </button>
+        ) : null}
       </div>
 
       {deviceError ? (
@@ -228,7 +263,7 @@ export function CheckInScreen({
             </label>
             <button
               type="submit"
-              disabled={busy || !token.trim()}
+              disabled={Boolean(busy) || !token.trim()}
               className="rounded-md bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-stone-700 disabled:opacity-50"
             >
               {busy ? 'Checking…' : 'Check in'}
@@ -269,7 +304,7 @@ export function CheckInScreen({
             </label>
             <button
               type="submit"
-              disabled={busy || !manualCode.trim()}
+              disabled={Boolean(busy) || !manualCode.trim()}
               className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-50"
             >
               Check in by code
@@ -313,7 +348,7 @@ export function CheckInScreen({
                 </label>
                 <button
                   type="submit"
-                  disabled={busy || !spotFirst.trim()}
+                  disabled={Boolean(busy) || !spotFirst.trim()}
                   className="rounded-md bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-700 disabled:opacity-50"
                 >
                   Register + check in

@@ -76,6 +76,7 @@ as $$
 declare
   v_status text;
   v_org uuid;
+  v_id uuid;
 begin
   select e.status, e.org_id into v_status, v_org
     from public.events e where e.id = p_event_id;
@@ -105,9 +106,10 @@ begin
   insert into public.event_submissions (event_id, kind, name, email,
     message, payload)
   values (p_event_id, p_kind, trim(p_name), lower(p_email),
-          trim(p_message), p_payload);
+          trim(p_message), p_payload)
+  returning id into v_id;
 
-  return jsonb_build_object('result', 'received');
+  return jsonb_build_object('result', 'received', 'id', v_id);
 end;
 $$;
 
