@@ -10,6 +10,7 @@ import type {
 import { formatDate, formatTime, timeZoneLabel } from '@core/ui/site/format';
 import { RegistrationForm } from '@core/ui/site/registration-form';
 import { ContactForm } from '@core/ui/site/contact-form';
+import { HappeningNow } from '@core/ui/site/live-now';
 import { ArrowRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -912,6 +913,23 @@ function Home({ content, basePath }: SitePageProps) {
 }
 
 function AgendaPage({ content, basePath }: SitePageProps) {
+  const speakerNames = new Map(
+    content.speakers.map((speaker) => [speaker.id, speaker.name])
+  );
+  const liveSessions = content.sessions
+    .filter((session) => session.starts_at && session.ends_at)
+    .map((session) => ({
+      id: session.id,
+      title: session.title,
+      startsAt: session.starts_at!,
+      endsAt: session.ends_at!,
+      room: session.room,
+      track: session.track,
+      speakers: session.speaker_ids
+        .map((id) => speakerNames.get(id))
+        .filter(Boolean) as string[],
+    }));
+
   return (
     <Shell>
       <main>
@@ -920,6 +938,10 @@ function AgendaPage({ content, basePath }: SitePageProps) {
           title="Agenda"
           lead="Two tracks — Build and Scale — around a shared main stage. Track talks are in person only; everything on the main stage streams live. All times India Standard Time."
           photo={PHOTOS.agenda}
+        />
+        <HappeningNow
+          sessions={liveSessions}
+          timeZone={content.event.timezone}
         />
         <section className="bg-white text-black">
           <div className="mx-auto max-w-6xl px-6 py-14">
