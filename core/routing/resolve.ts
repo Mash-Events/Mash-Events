@@ -95,12 +95,18 @@ function eventRewrite(
 
   // /<event>/pass/<token> → the registrant's pass page for this event (§9.1).
   if (rest[0] === 'pass') {
-    if (rest.length !== 2 || !/^[A-Za-z0-9._-]{10,400}$/.test(rest[1])) {
+    if (
+      rest.length < 2 ||
+      rest.length > 3 ||
+      !/^[A-Za-z0-9._-]{10,400}$/.test(rest[1]) ||
+      (rest.length === 3 && rest[2] !== 'badge')
+    ) {
       return { kind: 'not_found' };
     }
+    const tail = rest.length === 3 ? '/badge' : '';
     return {
       kind: 'rewrite',
-      pathname: `/api/public/events/${event.id}/pass/${rest[1]}`,
+      pathname: `/api/public/events/${event.id}/pass/${rest[1]}${tail}`,
       orgId: org.id,
       eventId: event.id,
     };

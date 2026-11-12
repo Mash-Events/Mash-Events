@@ -121,6 +121,7 @@ ${when ? `<p class="small">${escapeHtml(when)}</p>` : ''}
 <img src="${qr}" alt="Entry QR code — show this at the gate">
 <p class="small">Show this QR code at the gate. Screenshot this page in case the venue has poor signal.</p>
 </div>
+<p><a href="${escapeHtml(token)}/badge" style="color:#1c1917">Download badge (PDF)</a></p>
 <p class="small">This pass is personal: it stops working if your registration is cancelled.</p>`;
   return page(200, 'Your entry pass', 'You are confirmed. Keep this page handy.', extra);
 }

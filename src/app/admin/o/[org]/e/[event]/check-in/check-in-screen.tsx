@@ -49,14 +49,19 @@ const input =
 export function CheckInScreen({
   eventId,
   eventName,
+  canSpot,
 }: {
   eventId: string;
   eventName: string;
+  canSpot?: boolean;
 }) {
   const [device, setDevice] = useState<Device | null>(null);
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [token, setToken] = useState('');
   const [manualCode, setManualCode] = useState('');
+  const [spotFirst, setSpotFirst] = useState('');
+  const [spotLast, setSpotLast] = useState('');
+  const [spotEmail, setSpotEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<ScanOutcome | null>(null);
   const [feed, setFeed] = useState<Feed | null>(null);
@@ -155,6 +160,39 @@ export function CheckInScreen({
     }
   }
 
+  async function submitSpot(formEvent: React.FormEvent<HTMLFormElement>) {
+    formEvent.preventDefault();
+    if (!spotFirst.trim() || busy) return;
+    setBusy(true);
+    try {
+      const outcome = await eventApi<ScanOutcome>(eventId, '/check-in/spot', {
+        method: 'POST',
+        body: {
+          first_name: spotFirst.trim(),
+          last_name: spotLast.trim(),
+          email: spotEmail.trim() || undefined,
+        },
+      });
+      setLast({
+        result: 'spot_created',
+        registration_code: outcome.registration_code ?? null,
+        name: `${spotFirst.trim()} ${spotLast.trim()}`.trim(),
+      });
+      setSpotFirst('');
+      setSpotLast('');
+      setSpotEmail('');
+      loadFeed();
+    } catch (e) {
+      setLast({
+        result: 'error',
+        registration_code: null,
+        name: e instanceof AdminApiError ? e.message : 'Could not register.',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -237,6 +275,56 @@ export function CheckInScreen({
               Check in by code
             </button>
           </form>
+
+          {canSpot ? (
+            <form
+              onSubmit={submitSpot}
+              className="space-y-3 border-t border-stone-200 pt-5"
+            >
+              <p className="text-sm font-semibold text-stone-800">
+                Walk-up registration (spot)
+              </p>
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="block text-sm font-medium text-stone-800">
+                  First name
+                  <input
+                    className={`${input} w-36`}
+                    value={spotFirst}
+                    onChange={(e) => setSpotFirst(e.target.value)}
+                    required
+                  />
+                </label>
+                <label className="block text-sm font-medium text-stone-800">
+                  Last name
+                  <input
+                    className={`${input} w-36`}
+                    value={spotLast}
+                    onChange={(e) => setSpotLast(e.target.value)}
+                  />
+                </label>
+                <label className="block text-sm font-medium text-stone-800">
+                  Email (optional)
+                  <input
+                    type="email"
+                    className={`${input} w-52`}
+                    value={spotEmail}
+                    onChange={(e) => setSpotEmail(e.target.value)}
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={busy || !spotFirst.trim()}
+                  className="rounded-md bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-700 disabled:opacity-50"
+                >
+                  Register + check in
+                </button>
+              </div>
+              <p className="text-xs text-stone-500">
+                Creates a confirmed spot registration, checks it in for today
+                and audits it. No emails are sent.
+              </p>
+            </form>
+          ) : null}
 
           <section className="border-t border-stone-200 pt-5">
             <div className="flex items-baseline justify-between">

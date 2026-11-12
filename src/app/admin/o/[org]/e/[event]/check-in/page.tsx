@@ -16,5 +16,11 @@ export default async function CheckInPage({
   const { event, permissions } = await loadWorkspace(org, eventSlug);
   if (!permissions.includes('checkin.scan')) notFound();
 
-  return <CheckInScreen eventId={event.id} eventName={event.name} />;
+  return (
+    <CheckInScreen
+      eventId={event.id}
+      eventName={event.name}
+      canSpot={permissions.includes('registrations.review')}
+    />
+  );
 }
