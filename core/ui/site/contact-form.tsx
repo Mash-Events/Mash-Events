@@ -3,15 +3,16 @@
 import { useRef, useState } from 'react';
 import { useTurnstile } from './registration-form';
 
-// Contact form island (docs/system-design.md §16.4). Posts to
+// Contact form island (docs/system-design.md §16.4), styled after the seed
+// site's application forms: white inputs on a dark card, uppercase labels,
+// and an inline status line instead of a page swap. Posts to
 // <basePath>/api/submit with kind 'contact' — the same generic endpoint that
-// carries speaker, volunteer and media-accreditation forms. Turnstile loads
-// only when the form becomes visible.
+// carries speaker, volunteer and media-accreditation forms.
 
 type Props = {
   basePath: string;
-  heading?: string;
-  blurb?: string;
+  privacyUrl?: string;
+  termsUrl?: string;
 };
 
 type Status =
@@ -22,42 +23,45 @@ type Status =
 
 const TOPICS = [
   'General enquiry',
+  'Registration',
   'Sponsorship',
   'Partnership',
   'Press',
 ] as const;
 
-const input =
-  'mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-base text-stone-900 focus:border-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900';
+const field =
+  'h-11 w-full rounded-[10px] border-0 bg-white px-4 text-sm text-stone-900 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-white';
+const label =
+  'mb-2 block text-xs font-black uppercase tracking-[0.12em] text-white';
 
-export function ContactForm({
-  basePath,
-  heading = 'Get in touch',
-  blurb = 'Questions, sponsorship, partnerships or press — send us a note and the team will get back to you.',
-}: Props) {
+export function ContactForm({ basePath, privacyUrl, termsUrl }: Props) {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    message: '',
+    topic: TOPICS[0] as string,
+  });
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const captchaBox = useRef<HTMLDivElement>(null);
   const turnstile = useTurnstile(captchaBox, 'submit');
 
-  if (status.kind === 'done') {
-    return (
-      <div role="status" className="rounded-lg bg-green-50 p-6 text-green-900">
-        <p className="text-lg font-semibold">Thank you.</p>
-        <p className="mt-1">{status.message}</p>
-      </div>
-    );
+  function update(
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const text = (name: string) => String(form.get(name) ?? '').trim();
     const body = {
       kind: 'contact',
-      name: text('name'),
-      email: text('email'),
-      message: text('message'),
-      payload: { topic: text('topic') },
+      name: form.name.trim(),
+      email: form.email.trim(),
+      message: form.message.trim(),
+      payload: { topic: form.topic },
       turnstile_token: turnstile.token,
     };
 
@@ -70,14 +74,20 @@ export function ContactForm({
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setStatus({ kind: 'done', message: data.message });
+        setForm({ name: '', email: '', message: '', topic: TOPICS[0] });
+        setStatus({
+          kind: 'done',
+          message:
+            (data.message as string | undefined) ??
+            'Message received. The team will get back to you.',
+        });
         return;
       }
       turnstile.reset();
       setStatus({
         kind: 'error',
         message:
-          data.message ??
+          (data.message as string | undefined) ??
           (res.status === 429
             ? 'Too many attempts. Please try again later.'
             : res.status === 403
@@ -96,68 +106,117 @@ export function ContactForm({
   const sending = status.kind === 'sending';
 
   return (
-    <form onSubmit={submit} className="space-y-5" noValidate>
-      <div>
-        <h2 className="text-xl font-semibold text-stone-900">{heading}</h2>
-        <p className="mt-1 text-sm text-stone-600">{blurb}</p>
-      </div>
-      <label className="block text-sm font-medium text-stone-800">
-        Topic
-        <select name="topic" className={input} defaultValue={TOPICS[0]}>
-          {TOPICS.map((topic) => (
-            <option key={topic}>{topic}</option>
-          ))}
-        </select>
-      </label>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <label className="block text-sm font-medium text-stone-800">
-          Name *
+    <form onSubmit={submit} noValidate>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label htmlFor="contact-name" className={label}>
+            Full name *
+          </label>
           <input
+            id="contact-name"
             name="name"
+            value={form.name}
+            onChange={update}
             required
             maxLength={100}
             autoComplete="name"
-            className={input}
+            className={field}
           />
-        </label>
-        <label className="block text-sm font-medium text-stone-800">
-          Email *
+        </div>
+        <div>
+          <label htmlFor="contact-email" className={label}>
+            Email *
+          </label>
           <input
+            id="contact-email"
             name="email"
             type="email"
+            value={form.email}
+            onChange={update}
             required
             maxLength={320}
             autoComplete="email"
-            className={input}
+            className={field}
           />
-        </label>
+        </div>
+        <div className="md:col-span-2">
+          <label htmlFor="contact-topic" className={label}>
+            Topic
+          </label>
+          <select
+            id="contact-topic"
+            name="topic"
+            value={form.topic}
+            onChange={update}
+            className={field}
+          >
+            {TOPICS.map((topic) => (
+              <option key={topic}>{topic}</option>
+            ))}
+          </select>
+        </div>
+        <div className="md:col-span-2">
+          <label htmlFor="contact-message" className={label}>
+            Message *
+          </label>
+          <textarea
+            id="contact-message"
+            name="message"
+            value={form.message}
+            onChange={update}
+            required
+            maxLength={4000}
+            rows={5}
+            className={`${field} h-auto py-3`}
+          />
+        </div>
       </div>
-      <label className="block text-sm font-medium text-stone-800">
-        Message *
-        <textarea
-          name="message"
-          required
-          maxLength={4000}
-          rows={5}
-          className={input}
-        />
-      </label>
 
-      <div ref={captchaBox} />
+      <div ref={captchaBox} className="mt-4" />
 
-      {status.kind === 'error' ? (
-        <p role="alert" className="text-sm text-red-700">
+      <div className="mt-5">
+        <button
+          type="submit"
+          disabled={sending || (turnstile.required && !turnstile.token)}
+          className="h-auto rounded-xl bg-white px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-stone-900 transition-colors hover:bg-stone-100 disabled:opacity-60"
+        >
+          {sending ? 'Sending…' : 'Send message'}
+        </button>
+      </div>
+
+      {status.kind === 'done' || status.kind === 'error' ? (
+        <p
+          className="mt-3 text-sm leading-relaxed text-white/88"
+          role="status"
+          aria-live="polite"
+        >
           {status.message}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={sending || (turnstile.required && !turnstile.token)}
-        className="w-full rounded-md bg-stone-950 px-5 py-3 text-base font-semibold text-white hover:bg-stone-800 disabled:opacity-60 sm:w-auto"
-      >
-        {sending ? 'Sending…' : 'Send message'}
-      </button>
+      {privacyUrl || termsUrl ? (
+        <p className="mt-4 text-sm leading-relaxed text-white/82">
+          Your personal data will be processed in line with our{' '}
+          {privacyUrl ? (
+            <a
+              className="font-semibold underline underline-offset-4"
+              href={privacyUrl}
+            >
+              privacy policy
+            </a>
+          ) : null}
+          {privacyUrl && termsUrl ? ' and ' : null}
+          {termsUrl ? (
+            <a
+              className="font-semibold underline underline-offset-4"
+              href={termsUrl}
+            >
+              terms
+            </a>
+          ) : null}
+          .
+        </p>
+      ) : null}
     </form>
   );
 }

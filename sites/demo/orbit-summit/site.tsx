@@ -150,6 +150,9 @@ function Nav({ basePath }: { basePath: string }) {
           <a className="hover:text-[#cb1977]" href={`${basePath}/speakers`}>
             Speakers
           </a>
+          <a className="hover:text-[#cb1977]" href={`${basePath}/contact`}>
+            Contact
+          </a>
           <a
             href={`${basePath}#register`}
             className="rounded-full bg-black px-5 py-2.5 font-semibold text-white hover:bg-[#cb1977]"
@@ -597,35 +600,173 @@ function Register({ content, basePath }: SitePageProps) {
   );
 }
 
-function Contact({ basePath }: { basePath: string }) {
+function ContactCta({ basePath }: { basePath: string }) {
   return (
-    <section id="contact" className="bg-[#f5f5f4] text-black">
-      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-2">
-        <div>
-          <Eyebrow>Contact</Eyebrow>
-          <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
-            Talk to the team
-          </h2>
-          <p className="mt-6 max-w-md leading-relaxed text-black/70">
-            Want to sponsor a track, partner with Orbit, cover the summit for
-            your outlet, or just ask a question? Every message lands with the
-            organising team and gets a personal reply.
-          </p>
-          <p className="mt-8 text-sm text-black/50">
-            Prefer email? Write to{' '}
-            <a
-              href="mailto:hello@example.org"
-              className="font-semibold text-[#cb1977] hover:text-black"
-            >
-              hello@example.org
-            </a>
-          </p>
-        </div>
-        <div className="rounded-3xl border border-black/10 bg-white p-6 shadow-[0_25px_60px_-30px_rgba(0,0,0,0.35)] sm:p-8">
-          <ContactForm basePath={basePath} />
+    <section className="bg-[#f5f5f4] text-black">
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <Eyebrow>Contact</Eyebrow>
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">
+              Questions, sponsorship, press?
+            </h2>
+            <p className="mt-4 max-w-md leading-relaxed text-black/70">
+              Reach the team for registration, delegate participation,
+              partnerships and everything around the summit.
+            </p>
+          </div>
+          <a
+            href={`${basePath}/contact`}
+            className="rounded-full bg-black px-6 py-3 font-semibold text-white hover:bg-[#cb1977]"
+          >
+            Contact us
+          </a>
         </div>
       </div>
     </section>
+  );
+}
+
+const CONTACT_DESKS = [
+  {
+    eyebrow: 'Sponsor desk',
+    name: 'Track & stage sponsorship',
+    email: 'sponsors@example.org',
+    role: 'Sponsorship decks, on-site booths and sponsored sessions for the Build and Ship tracks.',
+  },
+  {
+    eyebrow: 'Partnership desk',
+    name: 'Community partnerships',
+    email: 'partners@example.org',
+    role: 'Community, media and academic partnerships, and delegations for the summit.',
+  },
+] as const;
+
+function ContactPage({ content, basePath }: SitePageProps) {
+  const { event } = content;
+  return (
+    <Shell>
+      <main>
+        <Nav basePath={basePath} />
+        <PageHeader
+          title="Contact us"
+          lead="Reach the Orbit team about registration, sponsorship, partnerships, press — or anything else."
+          photo="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2400&auto=format&fit=crop"
+        />
+
+        <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
+          <div className="rounded-[10px] border border-black/10 bg-white px-6 py-10 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:px-10 sm:py-12">
+            <p className="text-center text-xs font-black uppercase tracking-[0.18em] text-[#cb1977]">
+              General enquiries
+            </p>
+            <h2 className="mt-4 text-center text-3xl font-black tracking-tight text-black sm:text-4xl">
+              To discuss participation opportunities
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-relaxed text-black/70">
+              Reach the team for registration, delegate participation,
+              partnerships, and general summit-related coordination.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm font-semibold text-black sm:gap-4">
+              <span className="rounded-[10px] border border-black/10 bg-[#f5f5f4] px-4 py-2.5">
+                Grand Hall, Bengaluru
+              </span>
+              <a
+                href="mailto:hello@example.org"
+                className="rounded-[10px] border border-[#cb1977]/30 bg-[#cb1977]/10 px-4 py-2.5 text-[#cb1977] transition-colors hover:bg-[#cb1977]/20"
+              >
+                hello@example.org
+              </a>
+              <a
+                href={`${basePath}`}
+                className="rounded-[10px] border border-black/10 bg-[#f5f5f4] px-4 py-2.5 transition-colors hover:bg-white"
+              >
+                {event.org.name}
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 pb-16 sm:px-8">
+          <p className="text-center text-xs font-black uppercase tracking-[0.18em] text-[#cb1977]">
+            Sponsorship contacts
+          </p>
+          <h2 className="mt-4 text-center text-3xl font-black tracking-tight text-black sm:text-4xl">
+            To discuss sponsorship opportunities
+          </h2>
+          <p className="mx-auto mt-4 max-w-3xl text-center text-base leading-relaxed text-black/70">
+            Each contact below can route sponsorship, partnership, and strategic
+            collaboration conversations to the right team.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-5">
+            {CONTACT_DESKS.map((desk) => (
+              <article
+                key={desk.email}
+                className="flex w-full max-w-sm flex-col items-center rounded-[10px] border border-black/10 bg-white p-6 text-center shadow-[0_12px_40px_rgba(15,23,42,0.06)] sm:w-[calc(50%-0.625rem)]"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#cb1977]">
+                  {desk.eyebrow}
+                </p>
+                <h3 className="mt-3 text-xl font-black tracking-tight text-black">
+                  {desk.name}
+                </h3>
+                <p className="mt-3 text-sm font-semibold">
+                  <a
+                    href={`mailto:${desk.email}`}
+                    className="text-[#cb1977] transition-colors hover:text-black"
+                  >
+                    {desk.email}
+                  </a>
+                </p>
+                <p className="mt-4 text-sm leading-relaxed text-black/70">
+                  {desk.role}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-4xl px-6 pb-16 sm:px-8">
+          <div className="rounded-[10px] border border-black/10 bg-gradient-to-br from-white via-[#f5f5f4] to-[#cb1977]/10 px-6 py-10 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:px-10">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#cb1977]">
+              Visit the venue
+            </p>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-black sm:text-4xl">
+              The Grand Hall
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-black/80">
+              <span>The Grand Hall, Embassy Row</span>
+              <br />
+              <span>Bengaluru, Karnataka</span>
+            </p>
+            <p className="mt-5 text-sm text-black/60">
+              Hybrid event — everything on the main stage also streams live
+              online.
+            </p>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 pb-20 sm:px-8">
+          <div className="w-full overflow-hidden rounded-[10px] bg-[linear-gradient(135deg,#0c0a09_0%,#292524_52%,#500724_100%)] text-white shadow-[0_28px_80px_-42px_rgba(12,10,9,0.72)]">
+            <div className="px-6 py-10 md:px-10 lg:px-12">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-white/65">
+                Enquiry form
+              </p>
+              <h2 className="mt-3 text-2xl font-black tracking-tight md:text-4xl">
+                Send us a message
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/90">
+                Complete the form below and the Orbit team will get back to you.
+                Every message lands with a person, not a queue.
+              </p>
+              <div className="mt-6">
+                <ContactForm basePath={basePath} />
+              </div>
+            </div>
+          </div>
+        </section>
+        <Footer content={content} basePath={basePath} />
+      </main>
+    </Shell>
   );
 }
 
@@ -762,7 +903,7 @@ function Home({ content, basePath }: SitePageProps) {
         {content.sponsors.length ? <Sponsors content={content} /> : null}
         <Quotes />
         <Register content={content} basePath={basePath} />
-        <Contact basePath={basePath} />
+        <ContactCta basePath={basePath} />
         <Faq />
         <Footer content={content} basePath={basePath} />
       </main>
@@ -819,13 +960,20 @@ function SpeakersPage({ content, basePath }: SitePageProps) {
 }
 
 const site: SiteModule = {
-  pages: { '': Home, agenda: AgendaPage, speakers: SpeakersPage },
+  pages: {
+    '': Home,
+    agenda: AgendaPage,
+    speakers: SpeakersPage,
+    contact: ContactPage,
+  },
   metadata: (content, path) => {
     const name = content.event.short_name ?? content.event.name;
-    const title =
-      path === ''
-        ? name
-        : `${path === 'agenda' ? 'Agenda' : 'Speakers'} · ${name}`;
+    const titles: Record<string, string> = {
+      agenda: 'Agenda',
+      speakers: 'Speakers',
+      contact: 'Contact us',
+    };
+    const title = path === '' ? name : `${titles[path] ?? path} · ${name}`;
     return { title, description: TAGLINE };
   },
 };
