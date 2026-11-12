@@ -320,3 +320,7 @@ values ('9f8e7d6c-5b4a-4c3d-9e2f-1a2b3c4d5e6f',
     jsonb_build_object('key', 'next_year', 'label', 'Would you come back?',
       'type', 'select', 'options', jsonb_build_array('Yes', 'Maybe', 'No'))))
 on conflict (event_id) do nothing;
+
+-- List the demo events in the platform directory (main-domain homepage).
+update public.events set listed = true
+ where slug in ('launch-webinar', 'orbit-summit', 'design-live');

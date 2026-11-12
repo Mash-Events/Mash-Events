@@ -15,6 +15,7 @@ type EventSettings = {
   capacity: number | null;
   waitlist_enabled: boolean;
   review_mode: 'manual' | 'auto_confirm';
+  listed: boolean;
   settings?: { join_url?: string | null; join_window_minutes?: number };
   join_url?: string | null;
   join_window_minutes?: number;
@@ -101,6 +102,7 @@ export function SettingsForm({
           capacity: settings.capacity,
           waitlist_enabled: settings.waitlist_enabled,
           review_mode: settings.review_mode,
+          listed: settings.listed,
           join_url: settings.join_url || null,
           join_window_minutes: settings.join_window_minutes ?? 30,
         },
@@ -247,6 +249,15 @@ export function SettingsForm({
           onChange={(e) => update({ waitlist_enabled: e.target.checked })}
         />
         Waitlist when full
+      </label>
+
+      <label className="flex items-center gap-2 text-sm text-stone-700">
+        <input
+          type="checkbox"
+          checked={settings.listed}
+          onChange={(e) => update({ listed: e.target.checked })}
+        />
+        List on the platform directory (main domain homepage)
       </label>
 
       {message ? (

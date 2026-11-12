@@ -1,7 +1,11 @@
 import type { NextRequest } from 'next/server';
 import { allow, clientIp } from '@core/security/rate-limit';
 import { escapeHtml } from '@core/messaging/templates';
-import { getCertByCode, getCertEvent } from '@core/db/privileged/certificates';
+import {
+  getCertByCode,
+  getCertEvent,
+  getRegistryCert,
+} from '@core/db/privileged/certificates';
 import { formatDate } from '@core/ui/site/format';
 
 // GET <org host>/<event>/verify/<code> (docs/system-design.md §9.1 phase 3):
@@ -68,7 +72,45 @@ export async function GET(
   }
 
   const cert = await getCertByCode(eventId, code);
-  if (!cert) {
+  if (cert) {
+    const name = `${cert.first_name} ${cert.last_name}`.trim();
+    const when = event.starts_at
+      ? formatDate(event.starts_at, event.timezone)
+      : '';
+    if (cert.status === 'revoked') {
+      const extra = `<div class="cert">
+<p class="small">${escapeHtml(event.name)}</p>
+<p style="font-weight:600;font-size:1.2rem;margin:.75rem 0">${escapeHtml(name)}</p>
+<p class="revoked">This certificate was revoked.</p>
+<p class="code" style="margin-top:1rem">${escapeHtml(code)}</p>
+</div>`;
+      return page(
+        200,
+        'Certificate verification',
+        'The certificate exists but is not valid.',
+        extra
+      );
+    }
+
+    const extra = `<div class="cert">
+<p class="small">${escapeHtml(event.org_name)} · ${escapeHtml(event.name)}${when ? ` · ${escapeHtml(when)}` : ''}</p>
+<p style="font-weight:600;font-size:1.2rem;margin:.75rem 0">${escapeHtml(name)}</p>
+<p class="valid">Valid certificate of participation</p>
+<p class="code" style="margin-top:1rem">${escapeHtml(code)}</p>
+</div>
+<p class="small">Issued ${formatDate(cert.issued_at, event.timezone)}.</p>`;
+    return page(
+      200,
+      'Certificate verification',
+      'This code belongs to a valid certificate.',
+      extra
+    );
+  }
+
+  // The live rows may be gone (retention purge) — the permanent registry
+  // still answers, with only the certificate-face facts.
+  const record = await getRegistryCert(eventId, code);
+  if (!record) {
     return page(
       404,
       'No certificate with this code',
@@ -76,14 +118,10 @@ export async function GET(
     );
   }
 
-  const name = `${cert.first_name} ${cert.last_name}`.trim();
-  const when = event.starts_at
-    ? formatDate(event.starts_at, event.timezone)
-    : '';
-  if (cert.status === 'revoked') {
+  if (record.status === 'revoked') {
     const extra = `<div class="cert">
-<p class="small">${escapeHtml(event.name)}</p>
-<p style="font-weight:600;font-size:1.2rem;margin:.75rem 0">${escapeHtml(name)}</p>
+<p class="small">${escapeHtml(record.event_dates ?? event.name)}</p>
+<p style="font-weight:600;font-size:1.2rem;margin:.75rem 0">${escapeHtml(record.name)}</p>
 <p class="revoked">This certificate was revoked.</p>
 <p class="code" style="margin-top:1rem">${escapeHtml(code)}</p>
 </div>`;
@@ -96,12 +134,12 @@ export async function GET(
   }
 
   const extra = `<div class="cert">
-<p class="small">${escapeHtml(event.org_name)} · ${escapeHtml(event.name)}${when ? ` · ${escapeHtml(when)}` : ''}</p>
-<p style="font-weight:600;font-size:1.2rem;margin:.75rem 0">${escapeHtml(name)}</p>
+<p class="small">${escapeHtml(record.event_dates ?? event.name)} · verified record</p>
+<p style="font-weight:600;font-size:1.2rem;margin:.75rem 0">${escapeHtml(record.name)}</p>
 <p class="valid">Valid certificate of participation</p>
 <p class="code" style="margin-top:1rem">${escapeHtml(code)}</p>
 </div>
-<p class="small">Issued ${formatDate(cert.issued_at, event.timezone)}.</p>`;
+<p class="small">Issued ${formatDate(record.issued_at, event.timezone)} · the attendee record for this edition has been retired; this verification remains valid.</p>`;
   return page(
     200,
     'Certificate verification',

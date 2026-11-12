@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { eventRoute, rpcError } from '@core/http/event-route';
-import { revalidateEventContent } from '@core/content/revalidate';
+import {
+  revalidateEventContent,
+  revalidateDirectory,
+} from '@core/content/revalidate';
 
 // GET/PATCH /api/admin/events/<eventId> — event settings (events.manage).
 // PATCH is allowed on archived events so a super admin can unarchive; the
@@ -31,6 +34,7 @@ const changes = z
     capacity: z.number().int().positive().max(1_000_000).nullable().optional(),
     waitlist_enabled: z.boolean().optional(),
     review_mode: z.enum(['manual', 'auto_confirm']).optional(),
+    listed: z.boolean().optional(),
     join_url: z
       .string()
       .trim()
@@ -44,7 +48,7 @@ const changes = z
   .strict();
 
 const FIELDS =
-  'id, slug, name, kind, status, timezone, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, waitlist_enabled, review_mode, settings';
+  'id, slug, name, kind, status, timezone, starts_at, ends_at, registration_opens_at, registration_closes_at, capacity, waitlist_enabled, review_mode, listed, settings';
 
 export const GET = eventRoute(
   { permission: 'events.manage' },
@@ -68,6 +72,7 @@ export const PATCH = eventRoute(
     });
     if (error) throw rpcError(error);
     revalidateEventContent(event.id);
+    revalidateDirectory();
     const { data } = await db
       .from('events')
       .select(FIELDS)

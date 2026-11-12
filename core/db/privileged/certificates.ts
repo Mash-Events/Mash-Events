@@ -147,3 +147,32 @@ export async function getCertByCode(
     revoked_at: data.revoked_at,
   };
 }
+
+/**
+ * The permanent record: after the retention purge removes the live rows,
+ * the slim registry (name as printed, event name, dates, status) still
+ * answers the public verify page.
+ */
+export async function getRegistryCert(
+  eventId: string,
+  code: string
+): Promise<{
+  status: string;
+  name: string;
+  event_dates: string | null;
+  issued_at: string;
+} | null> {
+  const { data, error } = await getPrivilegedClient()
+    .from('event_certificate_registry')
+    .select('status, name, event_dates, issued_at')
+    .eq('event_id', eventId)
+    .eq('code', code.toUpperCase())
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as {
+    status: string;
+    name: string;
+    event_dates: string | null;
+    issued_at: string;
+  };
+}
