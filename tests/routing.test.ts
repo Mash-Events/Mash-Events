@@ -77,14 +77,26 @@ test("one org's host cannot serve or reach another org's event", () => {
   );
 });
 
-test('admin and auth paths only exist on the admin host', () => {
+test('admin and auth paths are served on every known host', () => {
+  // The console + auth carry their own session and MFA gates; they are
+  // reachable from the admin host, event org hosts (a phone on an org
+  // host can open /admin) and the main domain. Unknown hosts 404.
   for (const path of ['/admin', '/auth/sign-in', '/api/admin/events/x']) {
     assert.equal(
       resolveRoute('flipkart.mash.example', path, config).kind,
+      'admin',
+      path
+    );
+    assert.equal(
+      resolveRoute('mash.example', path, config).kind,
+      'admin',
+      path
+    );
+    assert.equal(
+      resolveRoute('unknown.example', path, config).kind,
       'not_found',
       path
     );
-    assert.equal(resolveRoute('mash.example', path, config).kind, 'not_found');
   }
   assert.deepEqual(resolveRoute('admin.mash.example', '/admin', config), {
     kind: 'admin',

@@ -39,8 +39,8 @@ const INTERNAL_PREFIXES = ['/site', '/api/public', '/_preview'];
 const ADMIN_PREFIXES = ['/admin', '/auth', '/api/admin'];
 // Admin paths that do not need a signed-in session.
 const ADMIN_PUBLIC_PREFIXES = ['/auth'];
-// Paths any host may serve (health checks, cron).
-const SHARED_PREFIXES = ['/api/health', '/api/internal'];
+// Paths any host may serve (health checks, cron, the public platform page).
+const SHARED_PREFIXES = ['/api/health', '/api/internal', '/platform'];
 
 function hasPrefix(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
@@ -215,17 +215,31 @@ export function resolveRoute(
     return { kind: 'not_found' };
   }
 
-  // Admin and internal paths are never served on any other host.
+  // Internal paths are never served on any other host (the preview
+  // fallback below lets the root host serve /_preview).
   if (
-    hasAnyPrefix(pathname, ADMIN_PREFIXES) ||
-    (hasAnyPrefix(pathname, INTERNAL_PREFIXES) &&
-      !(config.previewFallback && hasPrefix(pathname, '/_preview')))
+    hasAnyPrefix(pathname, INTERNAL_PREFIXES) &&
+    !(config.previewFallback && hasPrefix(pathname, '/_preview'))
   ) {
     return { kind: 'not_found' };
   }
 
-  // Org host: first segment is the event slug.
+  // Admin console + auth paths are served on every configured host (the
+  // routes carry their own session + MFA gates) — the admin host
+  // admin.example.com, any event's org host, and the main domain. Internal
+  // paths stay 404 everywhere. Unknown hosts fall through to not_found.
   const org = config.orgs.find((candidate) => candidate.hosts.includes(host));
+  if (
+    hasAnyPrefix(pathname, ADMIN_PREFIXES) &&
+    (org !== undefined || config.rootHosts.includes(host))
+  ) {
+    if (hasAnyPrefix(pathname, ADMIN_PUBLIC_PREFIXES)) {
+      return { kind: 'admin', requiresSession: false };
+    }
+    return { kind: 'admin', requiresSession: true };
+  }
+
+  // Org host: first segment is the event slug.
   if (org) {
     const [slug, ...rest] = parts;
     if (!slug || !SLUG.test(slug)) return { kind: 'not_found' };
