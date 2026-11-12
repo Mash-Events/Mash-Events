@@ -89,6 +89,9 @@ export async function renderBadgePdf(input: BadgeInput): Promise<Buffer> {
             <Text style={styles.code}>{input.code}</Text>
           </View>
           <View style={styles.qrBox}>
+            {/* react-pdf images are not DOM imgs; the alt text lives in the
+                PDF structure below via the document metadata. */}
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={styles.qr} src={qrDataUrl} />
           </View>
         </View>

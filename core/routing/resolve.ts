@@ -112,6 +112,48 @@ function eventRewrite(
     };
   }
 
+  // /<event>/cert/<token>[/pdf] → the certificate claim page (§9.1 phase 3).
+  if (rest[0] === 'cert') {
+    if (
+      rest.length < 2 ||
+      rest.length > 3 ||
+      !/^[A-Za-z0-9._-]{10,400}$/.test(rest[1]) ||
+      (rest.length === 3 && rest[2] !== 'pdf')
+    ) {
+      return { kind: 'not_found' };
+    }
+    const tail = rest.length === 3 ? '/pdf' : '';
+    return {
+      kind: 'rewrite',
+      pathname: `/api/public/events/${event.id}/cert/${rest[1]}${tail}`,
+      orgId: org.id,
+      eventId: event.id,
+    };
+  }
+
+  // /<event>/verify/<code> → the public certificate verification page.
+  if (rest[0] === 'verify') {
+    if (rest.length !== 2 || !/^[A-Z0-9]{8}$/.test(rest[1])) {
+      return { kind: 'not_found' };
+    }
+    return {
+      kind: 'rewrite',
+      pathname: `/api/public/events/${event.id}/verify/${rest[1]}`,
+      orgId: org.id,
+      eventId: event.id,
+    };
+  }
+
+  // /<event>/api/submit → the generic per-event form endpoint (§16.4).
+  if (rest[0] === 'api' && rest[1] === 'submit' && rest.length === 2) {
+    return {
+      kind: 'rewrite',
+      pathname: `/api/public/events/${event.id}/submit`,
+      orgId: org.id,
+      eventId: event.id,
+    };
+  }
+
   const tail = rest.length ? `/${rest.join('/')}` : '';
   return {
     kind: 'rewrite',

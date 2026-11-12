@@ -19,6 +19,10 @@ export type EmailContext = {
   joinUrl?: string | null;
   /** Personal QR pass page link (on-site events, signed per pass). */
   passUrl?: string | null;
+  /** Personal certificate claim link (signed per certificate). */
+  certUrl?: string | null;
+  /** Public verification URL for the event's certificates. */
+  verifyUrl?: string | null;
   /** Subject and body of a custom (bulk or scheduled) message. */
   customSubject?: string | null;
   customBody?: string | null;
@@ -32,6 +36,7 @@ export const EMAIL_TEMPLATES = [
   'waitlisted',
   'rejected',
   'custom',
+  'certificate_issued',
 ] as const;
 export type EmailTemplateKey = (typeof EMAIL_TEMPLATES)[number];
 
@@ -120,6 +125,24 @@ function copyFor(ctx: EmailContext): Copy {
           'We hope to see you at a future event.',
         ],
       };
+    case 'certificate_issued':
+      return {
+        subject: `Your certificate for ${ctx.eventName}`,
+        heading: 'Your certificate is ready',
+        paragraphs: [
+          `Thank you for being part of ${ctx.eventName}. Your certificate of participation is ready.`,
+          ...(ctx.certUrl
+            ? [
+                'Open your certificate with the button below. From that page you can download it as a PDF and share the verification link.',
+              ]
+            : []),
+          ...(ctx.verifyUrl
+            ? [
+                `Anyone can confirm your certificate at ${ctx.verifyUrl} with your certificate code ${ctx.registrationCode}.`,
+              ]
+            : []),
+        ],
+      };
     case 'custom':
       if (!ctx.customSubject || !ctx.customBody) {
         throw new Error('custom email needs a subject and body');
@@ -150,6 +173,7 @@ export function renderEmail(ctx: EmailContext): RenderedEmail {
     ...copy.paragraphs.flatMap((p) => [p, '']),
     ...(ctx.joinUrl ? [`Join the session: ${ctx.joinUrl}`, ''] : []),
     ...(ctx.passUrl ? [`Your entry pass: ${ctx.passUrl}`, ''] : []),
+    ...(ctx.certUrl ? [`Your certificate: ${ctx.certUrl}`, ''] : []),
     ...(ctx.eventUrl ? [`Event page: ${ctx.eventUrl}`, ''] : []),
     signOff,
     `${ctx.eventName} · organised by ${ctx.orgName}`,
@@ -171,6 +195,7 @@ ${p(greeting)}
 ${copy.paragraphs.map(p).join('\n')}
 ${ctx.joinUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.joinUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Join the session</a></p>` : ''}
 ${ctx.passUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.passUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Show my entry pass</a></p>` : ''}
+${ctx.certUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.certUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">Open my certificate</a></p>` : ''}
 ${ctx.eventUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(ctx.eventUrl)}" style="display:inline-block;background:#0c0a09;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:600">View event page</a></p>` : ''}
 ${p(signOff)}
 </td></tr></table>

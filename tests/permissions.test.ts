@@ -81,14 +81,15 @@ test('the SQL role_permissions seed matches core/auth/permissions.ts', () => {
     .filter((name) => name.endsWith('.sql'))
     .map((name) => readFileSync(`supabase/migrations/${name}`, 'utf8'))
     .join('\n');
-  const insert = migrations.match(
-    /insert into public\.role_permissions[^;]*;/
-  )?.[0];
-  assert.ok(insert, 'role_permissions seed not found');
+  // Later migrations may add permission rows; every insert counts.
+  const inserts = migrations.match(
+    /insert into public\.role_permissions[^;]*;/g
+  );
+  assert.ok(inserts?.length, 'role_permissions seed not found');
   const seed = new Set(
-    [...insert.matchAll(/\('(\w+)', '([\w.]+)'\)/g)].map(
-      ([, role, permission]) => `${role}:${permission}`
-    )
+    inserts
+      .flatMap((insert) => [...insert.matchAll(/\('(\w+)', '([\w.]+)'\)/g)])
+      .map(([, role, permission]) => `${role}:${permission}`)
   );
   const code = new Set(
     Object.entries(ROLE_PERMISSIONS).flatMap(([role, permissions]) =>

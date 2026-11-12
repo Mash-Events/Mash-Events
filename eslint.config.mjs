@@ -64,6 +64,13 @@ const config = [
     rules: { 'no-restricted-imports': 'off' },
   },
   {
+    // Exception: roster exports upload to the private bucket and write the
+    // export audit row with the service role — the route itself is gated by
+    // the exports.pii permission and the RLS-pinned list (design §12.11).
+    files: ['src/app/api/admin/events/*/exports/**/*.{js,jsx,ts,tsx}'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
+  {
     files: ['sites/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'no-restricted-imports': [

@@ -8,6 +8,7 @@ import {
 import { releaseDueMessageIntents } from '../db/privileged/webinar';
 import { linkSecret, signJoinToken } from '../passes/join-token';
 import { issueQrPass } from '../db/privileged/passes';
+import { certificateClaimToken } from '../db/privileged/certificates';
 import {
   getWhatsAppConfig,
   isWhatsAppConfigured,
@@ -77,6 +78,22 @@ async function passUrlFor(item: ClaimedItem, eventUrl: string | null) {
   return token ? `${eventUrl}/pass/${token}` : null;
 }
 
+/** Personal certificate claim link for certificate_issued emails. */
+async function certUrlFor(item: ClaimedItem, eventUrl: string | null) {
+  if (item.template_key !== 'certificate_issued' || !eventUrl) return null;
+  const token = await certificateClaimToken(
+    item.event_id,
+    item.registration_id
+  );
+  return token ? `${eventUrl}/cert/${token}` : null;
+}
+
+/** Public verify link; the certificate code is the registration code. */
+function verifyUrlFor(item: ClaimedItem, eventUrl: string | null) {
+  if (item.template_key !== 'certificate_issued' || !eventUrl) return null;
+  return `${eventUrl}/verify/${item.registration_code}`;
+}
+
 async function sendOne(item: ClaimedItem, options: DrainOptions) {
   const defaultFrom =
     process.env.RESEND_DEFAULT_FROM?.trim() || 'events@mash.example';
@@ -95,6 +112,8 @@ async function sendOne(item: ClaimedItem, options: DrainOptions) {
     subjectOverride: item.subject_override,
     joinUrl: await joinUrlFor(item, eventUrl),
     passUrl: await passUrlFor(item, eventUrl),
+    certUrl: await certUrlFor(item, eventUrl),
+    verifyUrl: verifyUrlFor(item, eventUrl),
     customSubject: item.job_subject,
     customBody: item.job_body,
   });

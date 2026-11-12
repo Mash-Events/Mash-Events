@@ -22,6 +22,8 @@ export const PERMISSIONS = [
   'exports.pii',
   'checkin.scan',
   'audit.read',
+  'certificates.manage',
+  'submissions.review',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -36,8 +38,14 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'exports.pii',
     'checkin.scan',
     'audit.read',
+    'certificates.manage',
+    'submissions.review',
   ],
-  reviewer: ['registrations.read', 'registrations.review'],
+  reviewer: [
+    'registrations.read',
+    'registrations.review',
+    'submissions.review',
+  ],
   checkin_staff: ['checkin.scan'],
 };
 

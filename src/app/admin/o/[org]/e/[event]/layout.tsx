@@ -33,6 +33,16 @@ export default async function WorkspaceLayout({
       show: permissions.includes('checkin.scan'),
     },
     {
+      href: `${base}/certificates`,
+      label: 'Certificates',
+      show: permissions.includes('certificates.manage'),
+    },
+    {
+      href: `${base}/submissions`,
+      label: 'Submissions',
+      show: permissions.includes('submissions.review'),
+    },
+    {
       href: `${base}/settings`,
       label: 'Settings',
       show: permissions.includes('events.manage'),
