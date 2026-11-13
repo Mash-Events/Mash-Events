@@ -9,6 +9,11 @@ import { releaseDueMessageIntents } from '../db/privileged/webinar';
 import { linkSecret, signJoinToken } from '../passes/join-token';
 import { issueQrPass } from '../db/privileged/passes';
 import { certificateClaimToken } from '../db/privileged/certificates';
+import { getAgendaSessions } from '../db/privileged/agenda';
+import { renderBadgePdf } from '../passes/badge';
+import { renderCertificatePdf } from '../certificates/certificate-pdf';
+import { renderAgendaPdf } from '../agenda/agenda-pdf';
+import { formatDate, formatTime, timeZoneLabel } from '../ui/site/format';
 import {
   getWhatsAppConfig,
   isWhatsAppConfigured,
@@ -69,13 +74,21 @@ async function joinUrlFor(item: ClaimedItem, eventUrl: string | null) {
   return `${eventUrl}/join/${token}`;
 }
 
-/** Personal QR pass page link for confirmed on-site registrations. */
-async function passUrlFor(item: ClaimedItem, eventUrl: string | null) {
+/** Personal QR pass page link for confirmed on-site registrations. Returns
+ *  the token too — the same token re-renders the attendee's badge PDF. */
+async function passFor(
+  item: ClaimedItem,
+  eventUrl: string | null
+): Promise<{ url: string | null; token: string | null }> {
   const onSite =
     item.event_kind === 'in_person' || item.event_kind === 'hybrid';
-  if (item.template_key !== 'confirmed' || !onSite || !eventUrl) return null;
+  if (item.template_key !== 'confirmed' || !onSite)
+    return { url: null, token: null };
   const token = await issueQrPass(item.event_id, item.registration_id);
-  return token ? `${eventUrl}/pass/${token}` : null;
+  return {
+    url: token && eventUrl ? `${eventUrl}/pass/${token}` : null,
+    token,
+  };
 }
 
 /** Personal certificate claim link for certificate_issued emails. */
@@ -100,10 +113,86 @@ function feedbackUrlFor(item: ClaimedItem, eventUrl: string | null) {
   return `${eventUrl}/feedback`;
 }
 
-async function sendOne(item: ClaimedItem, options: DrainOptions) {
+/** Human label for the event window, event-local (shared with the badge and
+ *  certificate PDF routes' formatting). */
+function whenLabel(item: ClaimedItem): string {
+  return item.event_starts_at
+    ? `${formatDate(item.event_starts_at, item.event_timezone)} · ${formatTime(
+        item.event_starts_at,
+        item.event_timezone
+      )} ${timeZoneLabel(item.event_timezone, item.event_starts_at)}`
+    : '';
+}
+
+function attendeeName(item: ClaimedItem): string {
+  return (
+    `${item.first_name} ${item.last_name}`.trim() || item.registration_code
+  );
+}
+
+async function sendOne(
+  item: ClaimedItem,
+  options: DrainOptions,
+  agendaCache: Map<string, Buffer>
+) {
   const defaultFrom =
     process.env.RESEND_DEFAULT_FROM?.trim() || 'events@mash.example';
   const eventUrl = options.eventUrl(item.org_id, item.event_slug);
+  const pass = await passFor(item, eventUrl);
+  const certUrl = await certUrlFor(item, eventUrl);
+
+  // Generated PDF attachments (docs §8): the attendee's own badge on the
+  // confirmation email, their certificate on issue, and the agenda for
+  // reminder/bulk jobs that asked for it. The agenda is rendered once per
+  // drain run; badge/certificate are per-attendee.
+  const attachments: { filename: string; content: Buffer }[] = [];
+  const safeCode = item.registration_code.replace(/[^\w.-]/g, '');
+  try {
+    if (pass.token) {
+      attachments.push({
+        filename: `badge-${safeCode}.pdf`,
+        content: await renderBadgePdf({
+          orgName: item.org_name,
+          eventName: item.event_name,
+          when: whenLabel(item),
+          attendeeName: attendeeName(item),
+          code: item.registration_code,
+          passToken: pass.token,
+        }),
+      });
+    }
+    if (item.template_key === 'certificate_issued') {
+      attachments.push({
+        filename: `certificate-${safeCode}.pdf`,
+        content: await renderCertificatePdf({
+          orgName: item.org_name,
+          eventName: item.event_name,
+          when: whenLabel(item),
+          attendeeName: attendeeName(item),
+          code: item.registration_code,
+        }),
+      });
+    }
+    if ((item.attachments ?? []).includes('agenda_pdf')) {
+      const cacheKey = `${item.event_id}:agenda`;
+      let agenda = agendaCache.get(cacheKey);
+      if (!agenda) {
+        const sessions = await getAgendaSessions(item.event_id);
+        agenda = await renderAgendaPdf({
+          orgName: item.org_name,
+          eventName: item.event_name,
+          when: whenLabel(item),
+          sessions,
+        });
+        agendaCache.set(cacheKey, agenda);
+      }
+      attachments.push({ filename: 'agenda.pdf', content: agenda });
+    }
+  } catch {
+    // A rendering failure must not block the email itself (§8): the links
+    // in the body still work, so send without attachments and note nothing.
+  }
+
   const rendered = renderEmail({
     templateKey: item.template_key,
     firstName: item.first_name,
@@ -117,8 +206,8 @@ async function sendOne(item: ClaimedItem, options: DrainOptions) {
     eventUrl,
     subjectOverride: item.subject_override,
     joinUrl: await joinUrlFor(item, eventUrl),
-    passUrl: await passUrlFor(item, eventUrl),
-    certUrl: await certUrlFor(item, eventUrl),
+    passUrl: pass.url,
+    certUrl,
     verifyUrl: verifyUrlFor(item, eventUrl),
     feedbackUrl: feedbackUrlFor(item, eventUrl),
     customSubject: item.job_subject,
@@ -131,6 +220,7 @@ async function sendOne(item: ClaimedItem, options: DrainOptions) {
     subject: rendered.subject,
     html: rendered.html,
     text: rendered.text,
+    attachments,
     tags: [
       { name: 'event_id', value: item.event_id },
       { name: 'job_item_id', value: item.item_id },
@@ -144,6 +234,8 @@ export async function drainEmail(options: DrainOptions): Promise<DrainReport> {
   const budget = options.budgetMs ?? 45_000;
   const batchSize = options.batchSize ?? 25;
   const report: DrainReport = { claimed: 0, sent: 0, retried: 0, failed: 0 };
+  // One agenda render per drain run per event (shared across the batch).
+  const agendaCache = new Map<string, Buffer>();
 
   // Scheduled messages whose time has come become queued items first.
   if (!options.onlyEventId) await releaseDueMessageIntents();
@@ -166,11 +258,13 @@ export async function drainEmail(options: DrainOptions): Promise<DrainReport> {
           });
           continue;
         }
-        const result = await sendOne(item, options).catch((error) => ({
-          ok: false as const,
-          retryable: false,
-          error: `render: ${error instanceof Error ? error.message : 'failed'}`,
-        }));
+        const result = await sendOne(item, options, agendaCache).catch(
+          (error) => ({
+            ok: false as const,
+            retryable: false,
+            error: `render: ${error instanceof Error ? error.message : 'failed'}`,
+          })
+        );
         if (result.ok) {
           await finishMessageItem(
             eventId,

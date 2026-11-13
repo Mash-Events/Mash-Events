@@ -49,6 +49,7 @@ const draft = z
     body: z.string().trim().min(1).max(5000),
     include_join_link: z.boolean().default(false),
     send_at: z.string().datetime({ offset: true }).nullable().optional(),
+    attachments: z.array(z.literal('agenda_pdf')).max(4).default([]),
   })
   .strict();
 
@@ -62,6 +63,7 @@ export const POST = eventRoute(
       p_body: body.body,
       p_include_join_link: body.include_join_link,
       p_send_at: body.send_at ?? null,
+      p_attachments: body.attachments,
     });
     if (error) throw rpcError(error);
     return { preview: data };

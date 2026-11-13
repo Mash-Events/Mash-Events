@@ -15,6 +15,8 @@ export type OutgoingEmail = {
   text: string;
   tags: { name: string; value: string }[];
   idempotencyKey: string;
+  /** Generated PDFs attached to the email (badge, certificate, agenda). */
+  attachments?: { filename: string; content: Buffer }[];
 };
 
 export type SendResult =
@@ -39,6 +41,7 @@ export async function sendEmail(email: OutgoingEmail): Promise<SendResult> {
       to: email.to.replace(/^(.).*(@.*)$/, '$1***$2'),
       subject: email.subject,
       key: email.idempotencyKey,
+      attachments: (email.attachments ?? []).map((a) => a.filename),
     });
     return { ok: true, providerMessageId: `log_${email.idempotencyKey}` };
   }
@@ -54,6 +57,10 @@ export async function sendEmail(email: OutgoingEmail): Promise<SendResult> {
         html: email.html,
         text: email.text,
         tags: email.tags,
+        attachments: (email.attachments ?? []).map((a) => ({
+          filename: a.filename,
+          content: a.content.toString('base64'),
+        })),
       },
       { idempotencyKey: email.idempotencyKey }
     );

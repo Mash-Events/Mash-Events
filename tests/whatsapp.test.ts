@@ -45,6 +45,7 @@ const ITEM = {
   job_subject: null,
   job_body: null,
   include_join_link: false,
+  attachments: null,
 };
 
 function withEnv(patch: Record<string, string | undefined>, run: () => void) {

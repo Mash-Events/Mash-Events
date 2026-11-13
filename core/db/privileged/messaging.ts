@@ -30,6 +30,8 @@ export type ClaimedItem = {
   job_subject: string | null;
   job_body: string | null;
   include_join_link: boolean;
+  /** Attachment kinds requested for this item's job (docs §8). */
+  attachments: string[] | null;
 };
 
 export async function eventsWithDueMessages(

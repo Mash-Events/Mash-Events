@@ -56,6 +56,7 @@ export function MessagesScreen({
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [includeJoinLink, setIncludeJoinLink] = useState(false);
+  const [attachAgenda, setAttachAgenda] = useState(false);
   const [schedule, setSchedule] = useState(false);
   const [sendAt, setSendAt] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -119,6 +120,7 @@ export function MessagesScreen({
           subject,
           body,
           include_join_link: includeJoinLink,
+          attachments: attachAgenda ? ['agenda_pdf'] : [],
           send_at: schedule ? fromLocalInput(sendAt, timezone) : null,
         },
       })
@@ -274,6 +276,17 @@ export function MessagesScreen({
             }}
           />
           Include each confirmed person&apos;s personal webinar join link
+        </label>
+        <label className="flex items-center gap-2 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            checked={attachAgenda}
+            onChange={(e) => {
+              resetDraft();
+              setAttachAgenda(e.target.checked);
+            }}
+          />
+          Attach the agenda as a PDF
         </label>
         <div className="flex flex-wrap items-end gap-4">
           <label className="flex items-center gap-2 text-sm text-stone-700">
