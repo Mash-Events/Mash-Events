@@ -762,7 +762,11 @@ function ContactPage({ content, basePath }: SitePageProps) {
                 Every message lands with a person, not a queue.
               </p>
               <div className="mt-6">
-                <ContactForm basePath={basePath} />
+                <ContactForm
+                  basePath={basePath}
+                  closed={content.event.submissions_open === false}
+                  closedMessage={`Submissions for ${content.event.name} are currently closed.`}
+                />
               </div>
             </div>
           </div>

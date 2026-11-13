@@ -44,6 +44,16 @@ const changes = z
       .nullable()
       .optional(),
     join_window_minutes: z.number().int().min(0).max(240).optional(),
+    submissions_open: z.boolean().optional(),
+    submission_inbox_email: z
+      .string()
+      .trim()
+      .max(320)
+      .refine((v) => v === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v), {
+        message: 'Enter a valid notification email address.',
+      })
+      .nullable()
+      .optional(),
   })
   .strict();
 

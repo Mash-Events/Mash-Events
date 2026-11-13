@@ -121,6 +121,14 @@ export async function POST(
       return reply(404, { error: 'not_found' });
     }
 
+    // Admin toggle (Settings): submissions_open false = form closed.
+    // Fail-open — absent key keeps the form open (migration 20261114090000).
+    const submissionsOpen = (event.settings as Record<string, unknown> | null)
+      ?.submissions_open;
+    if (submissionsOpen === false) {
+      return reply(403, { error: 'form_closed' });
+    }
+
     const result = await submitSubmission(eventId, {
       kind: input.kind,
       name: input.name,

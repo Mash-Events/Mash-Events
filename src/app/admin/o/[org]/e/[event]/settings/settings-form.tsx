@@ -16,9 +16,16 @@ type EventSettings = {
   waitlist_enabled: boolean;
   review_mode: 'manual' | 'auto_confirm';
   listed: boolean;
-  settings?: { join_url?: string | null; join_window_minutes?: number };
+  settings?: {
+    join_url?: string | null;
+    join_window_minutes?: number;
+    submissions_open?: boolean;
+    submission_inbox_email?: string | null;
+  };
   join_url?: string | null;
   join_window_minutes?: number;
+  submissions_open: boolean;
+  submission_inbox_email: string;
 };
 
 const STATUSES = [
@@ -60,6 +67,9 @@ export function SettingsForm({
           ...res.event,
           join_url: res.event.settings?.join_url ?? null,
           join_window_minutes: res.event.settings?.join_window_minutes ?? 30,
+          submissions_open: res.event.settings?.submissions_open ?? true,
+          submission_inbox_email:
+            res.event.settings?.submission_inbox_email ?? '',
         })
       )
       .catch((error: AdminApiError) =>
@@ -105,12 +115,17 @@ export function SettingsForm({
           listed: settings.listed,
           join_url: settings.join_url || null,
           join_window_minutes: settings.join_window_minutes ?? 30,
+          submissions_open: settings.submissions_open ?? true,
+          submission_inbox_email: settings.submission_inbox_email || '',
         },
       });
       setSettings({
         ...res.event,
         join_url: res.event.settings?.join_url ?? null,
         join_window_minutes: res.event.settings?.join_window_minutes ?? 30,
+        submissions_open: res.event.settings?.submissions_open ?? true,
+        submission_inbox_email:
+          res.event.settings?.submission_inbox_email ?? '',
       });
       setMessage({ kind: 'ok', text: 'Saved.' });
       router.refresh();
@@ -259,6 +274,35 @@ export function SettingsForm({
         />
         List on the platform directory (main domain homepage)
       </label>
+
+      <fieldset className="space-y-3 border-t border-stone-200 pt-5">
+        <legend className="text-sm font-semibold text-stone-900">
+          Submissions inbox
+        </legend>
+        <label className="flex items-center gap-2 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            checked={settings.submissions_open}
+            onChange={(e) => update({ submissions_open: e.target.checked })}
+          />
+          Accept submissions (contact and application forms on the event site)
+        </label>
+        <label className="block text-sm font-medium text-stone-700">
+          Notification email
+          <input
+            type="email"
+            className={input}
+            value={settings.submission_inbox_email}
+            onChange={(e) => update({ submission_inbox_email: e.target.value })}
+            placeholder="team@example.org"
+          />
+          <span className="mt-1 block text-xs font-normal text-stone-500">
+            Where new submissions are sent. Leave empty to store submissions
+            without emailing anyone. When submissions are turned off the public
+            form shows a closed notice.
+          </span>
+        </label>
+      </fieldset>
 
       {message ? (
         <p

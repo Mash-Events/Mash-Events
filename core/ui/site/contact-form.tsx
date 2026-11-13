@@ -13,6 +13,9 @@ type Props = {
   basePath: string;
   privacyUrl?: string;
   termsUrl?: string;
+  /** Settings toggle: false renders a closed notice instead of the form. */
+  closed?: boolean;
+  closedMessage?: string;
 };
 
 type Status =
@@ -34,7 +37,13 @@ const field =
 const label =
   'mb-2 block text-xs font-black uppercase tracking-[0.12em] text-white';
 
-export function ContactForm({ basePath, privacyUrl, termsUrl }: Props) {
+export function ContactForm({
+  basePath,
+  privacyUrl,
+  termsUrl,
+  closed,
+  closedMessage,
+}: Props) {
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -104,6 +113,16 @@ export function ContactForm({ basePath, privacyUrl, termsUrl }: Props) {
   }
 
   const sending = status.kind === 'sending';
+
+  if (closed) {
+    return (
+      <div className="rounded-xl border border-white/20 bg-white/10 p-6 text-sm text-stone-200">
+        <p className="font-semibold text-white">
+          {closedMessage ?? 'Submissions are currently closed.'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={submit} noValidate>

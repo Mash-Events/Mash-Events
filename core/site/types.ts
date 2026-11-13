@@ -17,6 +17,8 @@ export type PublicEvent = {
   registration_open: boolean;
   registration_opens_at: string | null;
   registration_closes_at: string | null;
+  /** Fail-open: absent key = form open (docs §10.1). */
+  submissions_open: boolean;
   org: { slug: string; name: string };
 };
 
