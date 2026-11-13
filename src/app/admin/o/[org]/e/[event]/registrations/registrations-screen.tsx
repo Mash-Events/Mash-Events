@@ -72,6 +72,71 @@ export function RegistrationsScreen({
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState(q);
   const [busy, setBusy] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  function toggleRow(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllOnPage() {
+    const rows = data?.registrations ?? [];
+    setSelectedIds((prev) => {
+      const allSelected =
+        rows.length > 0 && rows.every((row) => prev.has(row.id));
+      const next = new Set(prev);
+      for (const row of rows) {
+        if (allSelected) next.delete(row.id);
+        else next.add(row.id);
+      }
+      return next;
+    });
+  }
+
+  async function bulkDecision(to: RegistrationStatus) {
+    const ids = [...selectedIds];
+    if (!ids.length || bulkBusy) return;
+    if (
+      !window.confirm(
+        `Change ${ids.length} selected registration${
+          ids.length === 1 ? '' : 's'
+        } to ${to}? Status emails will be queued.`
+      )
+    )
+      return;
+    setBulkBusy(to);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await eventApi<{
+        requested: number;
+        changed: number;
+        skipped: number;
+        failed: number;
+      }>(eventId, '/registrations/status-batch', {
+        method: 'POST',
+        body: { ids, to },
+      });
+      const parts = [`${result.changed} updated`];
+      if (result.skipped) parts.push(`${result.skipped} already ${to}`);
+      if (result.failed) parts.push(`${result.failed} failed`);
+      setNotice(`Bulk ${to}: ${parts.join(', ')}.`);
+      setSelectedIds(new Set());
+      await load();
+    } catch (e) {
+      setError(
+        e instanceof AdminApiError ? e.message : 'The bulk update failed.'
+      );
+    } finally {
+      setBulkBusy(null);
+    }
+  }
 
   const fetchList = useCallback(() => {
     const params = new URLSearchParams();
@@ -120,6 +185,9 @@ export function RegistrationsScreen({
       else params.delete(key);
     }
     if (!('page' in next)) params.delete('page');
+    // Rows leave the page on every filter/pagination change: drop the
+    // selection so ids always refer to visible rows.
+    setSelectedIds(new Set());
     router.replace(`?${params.toString()}`, { scroll: false });
   }
 
@@ -242,6 +310,21 @@ export function RegistrationsScreen({
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
             <tr>
+              {canReview ? (
+                <th className="px-4 py-2">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all on this page"
+                    checked={
+                      (data?.registrations ?? []).length > 0 &&
+                      (data?.registrations ?? []).every((row) =>
+                        selectedIds.has(row.id)
+                      )
+                    }
+                    onChange={toggleAllOnPage}
+                  />
+                </th>
+              ) : null}
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Email</th>
               <th className="px-4 py-2">Organisation</th>
@@ -258,6 +341,19 @@ export function RegistrationsScreen({
                 className={`cursor-pointer hover:bg-stone-50 ${selected === row.id ? 'bg-stone-50' : ''}`}
                 onClick={() => setSelected(row.id)}
               >
+                {canReview ? (
+                  <td
+                    className="px-4 py-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${row.first_name} ${row.last_name}`}
+                      checked={selectedIds.has(row.id)}
+                      onChange={() => toggleRow(row.id)}
+                    />
+                  </td>
+                ) : null}
                 <td className="px-4 py-2 font-medium text-stone-900">
                   {row.first_name} {row.last_name}
                 </td>
@@ -307,7 +403,7 @@ export function RegistrationsScreen({
             {data && data.registrations.length === 0 ? (
               <tr>
                 <td
-                  colSpan={canReview ? 7 : 6}
+                  colSpan={canReview ? 8 : 6}
                   className="px-4 py-8 text-center text-stone-500"
                 >
                   No registrations{status ? ` with status ${status}` : ''}
@@ -352,6 +448,57 @@ export function RegistrationsScreen({
               Next
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {notice ? (
+        <p
+          role="status"
+          className="rounded-md bg-green-50 p-3 text-sm text-green-800"
+        >
+          {notice}
+        </p>
+      ) : null}
+
+      {canReview && selectedIds.size > 0 ? (
+        <div
+          className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-stone-300 bg-white p-3 shadow-lg"
+          data-testid="bulk-bar"
+        >
+          <span className="text-sm font-medium text-stone-900">
+            {selectedIds.size} selected
+          </span>
+          {(['confirmed', 'waitlisted', 'rejected'] as const).map((to) => {
+            const movable = (data?.registrations ?? []).filter(
+              (row) =>
+                selectedIds.has(row.id) &&
+                (TRANSITIONS[row.status] ?? []).includes(to)
+            ).length;
+            if (!movable) return null;
+            return (
+              <button
+                key={to}
+                type="button"
+                disabled={bulkBusy !== null}
+                onClick={() => bulkDecision(to)}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize text-white disabled:opacity-50 ${
+                  to === 'rejected'
+                    ? 'bg-red-700 hover:bg-red-600'
+                    : 'bg-stone-900 hover:bg-stone-700'
+                }`}
+              >
+                {bulkBusy === to ? 'Working…' : `${to} (${movable})`}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            disabled={bulkBusy !== null}
+            onClick={() => setSelectedIds(new Set())}
+            className="rounded-md border border-stone-300 px-3 py-1.5 text-sm text-stone-700 disabled:opacity-50"
+          >
+            Clear
+          </button>
         </div>
       ) : null}
 
